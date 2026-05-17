@@ -770,11 +770,17 @@ async function uploadFile(
 ) {
   const fileName = `${Date.now()}-${file.name}`;
 
+  const safeFileName =
+  fileName.split("/").pop() || fileName;
+
+const storagePath =
+  `${folder}/${safeFileName}`;
+
   const { error } = await supabase
     .storage
     .from("quiz-media")
     .upload(
-      `${folder}/${fileName}`,
+      storagePath,
         file,
       {
         contentType: file.type || undefined,
@@ -792,7 +798,7 @@ async function uploadFile(
     .storage
     .from("quiz-media")
     .getPublicUrl(
-      `${folder}/${fileName}`
+      storagePath
     );
 
   return publicUrl;
