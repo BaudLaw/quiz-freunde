@@ -1,7 +1,15 @@
+import Image from "next/image";
 export default function Home() {
   return (
     <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-8">
       <div className="max-w-xl w-full text-center space-y-6">
+        <Image
+          src="/logo.png"
+          alt="Logo"
+          width={180}
+          height={180}
+          className="mx-auto mb-8"
+        />
         <h1 className="text-5xl font-bold">Mein Quiz</h1>
 
         <p className="text-slate-300">

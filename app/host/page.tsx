@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 import { supabase } from "@/lib/supabase";
 import JSZip from "jszip";
+import Image from "next/image";
 
 function generateCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -903,6 +904,13 @@ if (!hostUnlocked) {
     <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 xl:grid-cols-[1.4fr_0.6fr]">
 
       <div className="space-y-6">
+        <Image
+        src="/logo.png"
+        alt="Logo"
+        width={120}
+        height={120}
+        className="mx-auto mb-6"
+      />
         <h1 className="text-5xl font-black">
           Baud_iful Quizz Host
         </h1>

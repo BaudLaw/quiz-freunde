@@ -8,6 +8,7 @@ import {
 } from "react";
 import { supabase } from "@/lib/supabase";
 import QRCode from "react-qr-code";
+import Image from "next/image";
 
 
 export default function DisplayPage({
@@ -309,6 +310,13 @@ useEffect(() => {
         )}
 
           <div className="text-center">
+            <Image
+              src="/logo.png"
+              alt="Logo"
+              width={180}
+              height={180}
+              className="mx-auto mb-8"
+            />
             <h1 className="text-3xl font-black">
             {room.title}
             </h1>
