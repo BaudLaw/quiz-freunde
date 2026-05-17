@@ -86,6 +86,12 @@ export default function HostPage() {
   const [deletedQuestionIds, setDeletedQuestionIds] =
   useState<string[]>([]);
 
+  const [hostPassword, setHostPassword] =
+  useState("");
+
+  const [hostUnlocked, setHostUnlocked] =
+  useState(false);
+
   useEffect(() => {
     loadQuizSets();
   }, []);
@@ -832,6 +838,44 @@ async function resetGame() {
   setLoadedQuestions([]);
 
   alert("Spiel zurückgesetzt");
+}
+
+if (!hostUnlocked) {
+  return (
+    <main className="min-h-screen bg-[#020617] text-white p-8 flex items-center justify-center">
+      <div className="quiz-panel rounded-3xl p-8 w-full max-w-md space-y-6">
+        <h1 className="text-4xl font-black text-center">
+          Host Login
+        </h1>
+
+        <input
+          type="password"
+          value={hostPassword}
+          onChange={(e) =>
+            setHostPassword(e.target.value)
+          }
+          placeholder="Host Passwort"
+          className="w-full rounded-xl bg-slate-900 border border-cyan-400/30 p-4"
+        />
+
+        <button
+          onClick={() => {
+            if (
+              hostPassword ===
+              process.env.NEXT_PUBLIC_HOST_PASSWORD
+            ) {
+              setHostUnlocked(true);
+            } else {
+              alert("Falsches Passwort");
+            }
+          }}
+          className="w-full bg-cyan-500 text-black rounded-xl p-4 font-black quiz-button quiz-glow"
+        >
+          Entsperren
+        </button>
+      </div>
+    </main>
+  );
 }
 
   return (
