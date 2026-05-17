@@ -618,7 +618,11 @@ async function processZipImport() {
   uploadedFiles[fileName] = publicUrl;
 
   const shortName =
-    fileName.split("/").pop() || fileName;
+  fileName
+    .split("/")
+    .pop()
+    ?.split("\\")
+    .pop() || fileName;
 
   uploadedFiles[shortName] = publicUrl;
 }
@@ -671,12 +675,12 @@ async function processZipImport() {
       solution: row.solution || "",
 
       image_url:
-        uploadedFiles[row.image] ||
+        uploadedFiles[row.image?.trim()] ||
         row.image_url ||
         "",
 
       audio_url:
-        uploadedFiles[row.audio] ||
+        uploadedFiles[row.audio?.trim()] ||
         row.audio_url ||
         "",
 
@@ -768,22 +772,30 @@ async function uploadFile(
   file: File,
   folder: string
 ) {
-  const fileName = `${Date.now()}-${file.name}`;
+  const originalName =
+    file.name
+      .split("/")
+      .pop()
+      ?.split("\\")
+      .pop() || "file";
 
-  const safeFileName =
-  fileName.split("/").pop() || fileName;
+  const safeName =
+    originalName
+      .replace(/[^a-zA-Z0-9._-]/g, "_")
+      .toLowerCase();
 
-const storagePath =
-  `${folder}/${safeFileName}`;
+  const storagePath =
+    `${folder}/${Date.now()}-${safeName}`;
 
   const { error } = await supabase
     .storage
     .from("quiz-media")
     .upload(
       storagePath,
-        file,
+      file,
       {
-        contentType: file.type || undefined,
+        contentType:
+          file.type || "application/octet-stream",
       }
     );
 
@@ -797,9 +809,7 @@ const storagePath =
   } = supabase
     .storage
     .from("quiz-media")
-    .getPublicUrl(
-      storagePath
-    );
+    .getPublicUrl(storagePath);
 
   return publicUrl;
 }
