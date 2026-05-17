@@ -800,7 +800,11 @@ async function uploadFile(
     );
 
   if (error) {
-    alert(error.message);
+    console.log(error);
+
+    alert(
+      JSON.stringify(error, null, 2)
+    );
     return null;
   }
 
