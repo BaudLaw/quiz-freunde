@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+:root {
+  --bg-main: #020617;
+  --bg-panel: #0f172a;
+  --bg-panel-light: #1e293b;
+
+  --neon-cyan: #22d3ee;
+  --neon-purple: #a855f7;
+
+  --success: #22c55e;
+  --danger: #ef4444;
+  --warning: #f97316;
+
+  --points: #facc15;
+}
+
+body {
+  background: var(--bg-main);
+  color: white;
+}
+
+.quiz-panel {
+  background: rgba(15, 23, 42, 0.92);
+
+  border: 2px solid
+    rgba(34, 211, 238, 0.45);
+
+  box-shadow:
+    0 0 25px
+      rgba(34, 211, 238, 0.12),
+
+    inset 0 0 30px
+      rgba(255, 255, 255, 0.02);
+
+  backdrop-filter: blur(10px);
+}
+
+.quiz-glow {
+  box-shadow:
+    0 0 20px
+      rgba(34, 211, 238, 0.45);
+}
+
+.quiz-button {
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background 0.12s ease;
+}
+
+.quiz-button:hover {
+  transform: scale(1.03);
+
+  box-shadow:
+    0 0 18px
+      rgba(34, 211, 238, 0.35);
+}
+
+.quiz-button:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.quiz-panel-enter {
+  animation: quizPanelEnter 0.45s ease;
+}
+
+@keyframes quizPanelEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.quiz-card-zoom {
+  border-radius: 1rem;
+  animation: quizCardZoom 1.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: left, top, width, height, border-radius;
+}
+
+@keyframes quizCardZoom {
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    opacity: 1;
+  }
+}
