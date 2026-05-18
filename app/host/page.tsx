@@ -1077,6 +1077,42 @@ if (!hostUnlocked) {
                 {activeQuestion?.category} | {activeQuestion?.points} Punkte
               </p>
 
+              {activeQuestion?.solution && (
+                <div className="rounded-xl border border-green-500/40 bg-slate-900/80 p-3">
+                  <p className="text-sm text-slate-400">
+                    Lösung
+                  </p>
+
+                  <p className="text-lg font-black text-green-400">
+                    {activeQuestion.solution}
+                  </p>
+                </div>
+              )}
+
+              {activeQuestion?.accepted_answers && (
+                <div className="rounded-xl border border-cyan-400/40 bg-slate-900/80 p-3">
+                  <p className="text-sm text-slate-400">
+                    Alternative Antworten
+                  </p>
+
+                  <p className="text-cyan-300">
+                    {activeQuestion.accepted_answers}
+                  </p>
+                </div>
+              )}
+
+              {activeQuestion?.host_notes && (
+                <div className="rounded-xl border border-purple-400/40 bg-slate-900/80 p-3">
+                  <p className="text-sm text-slate-400">
+                    Moderator Notizen
+                  </p>
+
+                  <p className="text-purple-300">
+                    {activeQuestion.host_notes}
+                  </p>
+                </div>
+              )}
+
               {activeQuestion?.accepted_answers && (
               <div className="bg-slate-700 rounded-xl p-3">
                 <p className="text-sm text-slate-400">
