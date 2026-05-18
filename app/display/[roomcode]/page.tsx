@@ -42,6 +42,11 @@ export default function DisplayPage({
   const questionLoopRef =
   useRef<HTMLAudioElement | null>(null);
   const solutionAudioPlayedRef = useRef("");
+  const questionAudioRef =
+  useRef<HTMLAudioElement | null>(null);
+
+const solutionAudioRef =
+  useRef<HTMLAudioElement | null>(null);
   
 
   useEffect(() => {
@@ -123,7 +128,9 @@ if (!roomData.feedback) {
         .from("questions")
         .select("*")
         .eq("room_code", roomCode)
-        .order("points", { ascending: true });
+        .order("question_number", {
+          ascending: true,
+        });
 
       setAllQuestions(allQuestionsData || []);
 
@@ -293,12 +300,19 @@ useEffect(() => {
     solutionAudioPlayedRef.current =
       question.solution_audio_url;
 
-    const audio = new Audio(
+    if (solutionAudioRef.current) {
+      solutionAudioRef.current.pause();
+      solutionAudioRef.current.currentTime = 0;
+    }
+
+    solutionAudioRef.current = new Audio(
       question.solution_audio_url
     );
 
-    audio.volume = 0.9;
-    audio.play().catch(() => {});
+    solutionAudioRef.current.volume = 0.9;
+    solutionAudioRef.current
+      .play()
+      .catch(() => {});
   }
 
   if (room?.game_state !== "solution") {
@@ -308,6 +322,26 @@ useEffect(() => {
   room?.game_state,
   question?.solution_audio_url,
 ]);
+
+useEffect(() => {
+  const questionAudioStates =
+    room?.game_state === "question" ||
+    room?.game_state === "buzzing_open" ||
+    room?.game_state === "player_answering";
+
+  const solutionAudioState =
+    room?.game_state === "solution";
+
+  if (!questionAudioStates && questionAudioRef.current) {
+    questionAudioRef.current.pause();
+    questionAudioRef.current.currentTime = 0;
+  }
+
+  if (!solutionAudioState && solutionAudioRef.current) {
+    solutionAudioRef.current.pause();
+    solutionAudioRef.current.currentTime = 0;
+  }
+}, [room?.game_state]);
 
   if (!room) {
     return (
@@ -582,7 +616,12 @@ useEffect(() => {
 
       {question.audio_url && (
         <div className="mt-8 flex justify-center">
-          <audio controls autoPlay className="w-full max-w-xl">
+          <audio
+            ref={questionAudioRef}
+            controls
+            autoPlay
+            className="w-full max-w-xl"
+          >
             <source src={question.audio_url} />
           </audio>
         </div>
@@ -615,7 +654,12 @@ useEffect(() => {
 
       {question.audio_url && (
         <div className="mt-8 flex justify-center">
-          <audio controls autoPlay className="w-full max-w-xl">
+          <audio
+            ref={questionAudioRef}
+            controls
+            autoPlay
+            className="w-full max-w-xl"
+          >
             <source src={question.audio_url} />
           </audio>
         </div>
@@ -648,7 +692,12 @@ useEffect(() => {
 
       {question.audio_url && (
         <div className="mt-8 flex justify-center">
-          <audio controls autoPlay className="w-full max-w-xl">
+          <audio
+            ref={questionAudioRef}
+            controls
+            autoPlay
+            className="w-full max-w-xl"
+          >
             <source src={question.audio_url} />
           </audio>
         </div>
