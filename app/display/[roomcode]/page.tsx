@@ -652,7 +652,7 @@ useEffect(() => {
     <div className="mx-auto flex min-h-[120px] w-full max-w-6xl items-center justify-center rounded-3xl border-4 border-cyan-400/60 bg-slate-900/90 quiz-panel quiz-glow px-12 py-6 text-center text-4xl font-black text-green-400 shadow-2xl quiz-panel-enter">
       {question.solution}
     </div>
-    
+
     {question.solution_image_url && (
       <div className="mt-6 flex justify-center">
         <img
@@ -671,6 +671,7 @@ useEffect(() => {
     {question.solution_audio_url && (
       <div className="mt-6 flex justify-center">
         <audio
+          key={`${room.game_state}-${question.solution_audio_url}`}
           controls
           autoPlay
           className="w-full max-w-xl"
