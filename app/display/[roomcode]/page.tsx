@@ -26,6 +26,8 @@ export default function DisplayPage({
   const [flash, setFlash] = useState("");
   const lastFeedbackRef = useRef("");
   const [zoomCard, setZoomCard] = useState<any>(null);
+  const [zoomedImage, setZoomedImage] = 
+  useState<string | null>(null);
   const [timeLeft, setTimeLeft] =
   useState(0);
   const timerAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -540,7 +542,14 @@ useEffect(() => {
 
       {question.image_url && (
         <div className="mt-8 flex justify-center">
-          <img src={question.image_url} alt="Quizbild" className="max-h-[180px] rounded-3xl border-4 border-slate-700 shadow-2xl" />
+          <img
+            src={question.image_url}
+            alt="Quizbild"
+            onClick={() =>
+              setZoomedImage(question.image_url)
+            }
+            className="cursor-zoom-in max-h-[180px] rounded-3xl border-4 border-slate-700 shadow-2xl"
+          />
         </div>
       )}
 
@@ -566,7 +575,14 @@ useEffect(() => {
 
       {question.image_url && (
         <div className="mt-8 flex justify-center">
-          <img src={question.image_url} alt="Quizbild" className="max-h-[180px] rounded-3xl border-4 border-slate-700 shadow-2xl" />
+          <img
+            src={question.image_url}
+            alt="Quizbild"
+            onClick={() =>
+              setZoomedImage(question.image_url)
+            }
+            className="cursor-zoom-in max-h-[180px] rounded-3xl border-4 border-slate-700 shadow-2xl"
+          />
         </div>
       )}
 
@@ -592,7 +608,14 @@ useEffect(() => {
 
       {question.image_url && (
         <div className="mt-8 flex justify-center">
-          <img src={question.image_url} alt="Quizbild" className="max-h-[180px] rounded-3xl border-4 border-slate-700 shadow-2xl" />
+          <img
+            src={question.image_url}
+            alt="Quizbild"
+            onClick={() =>
+              setZoomedImage(question.image_url)
+            }
+            className="cursor-zoom-in max-h-[180px] rounded-3xl border-4 border-slate-700 shadow-2xl"
+          />
         </div>
       )}
 
@@ -614,7 +637,14 @@ useEffect(() => {
 
       {question.image_url && (
         <div className="mt-6 flex justify-center">
-          <img src={question.image_url} alt="Quizbild" className="max-h-[180px] rounded-3xl border-4 border-slate-700 shadow-2xl" />
+          <img
+            src={question.image_url}
+            alt="Quizbild"
+            onClick={() =>
+              setZoomedImage(question.image_url)
+            }
+            className="cursor-zoom-in max-h-[180px] rounded-3xl border-4 border-slate-700 shadow-2xl"
+          />
         </div>
       )}
     </div>
@@ -743,6 +773,18 @@ useEffect(() => {
 )}
 </div>
       </div>
+      {zoomedImage && (
+        <div
+          onClick={() => setZoomedImage(null)}
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/90 p-8"
+        >
+          <img
+            src={zoomedImage}
+            alt="Zoom"
+            className="max-h-full max-w-full object-contain"
+          />
+        </div>
+      )}
     </main>
   );
 }
