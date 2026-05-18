@@ -1097,7 +1097,7 @@ if (!hostUnlocked) {
 
               {activeQuestion?.accepted_answers && (
                 <div className="rounded-xl border border-cyan-400/40 bg-slate-900/80 p-3">
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-white">
                     Alternative Antworten
                   </p>
 
@@ -1109,7 +1109,7 @@ if (!hostUnlocked) {
 
               {activeQuestion?.host_notes && (
                 <div className="rounded-xl border border-purple-400/40 bg-slate-900/80 p-3">
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-white">
                     Moderator Notizen
                   </p>
 
