@@ -737,18 +737,29 @@ async function processZipImport() {
         )
         .single();
 
-    if (playerData && activeQuestion) {
-      await supabase
-        .from("players")
-        .update({
-          score:
-            Number(playerData.score) -
-            Math.floor(
-              Number(activeQuestion.points || 0) / 2
-            ),
-        })
-        .eq("id", playerData.id);
-    }
+    const { data: questionData } =
+  await supabase
+    .from("questions")
+    .select("*")
+    .eq("room_code", roomCode)
+    .eq(
+      "question_number",
+      roomData.current_question
+    )
+    .single();
+
+      if (playerData && questionData) {
+        await supabase
+          .from("players")
+          .update({
+            score:
+              Number(playerData.score) -
+              Math.floor(
+                Number(questionData.points || 0) / 2
+              ),
+          })
+          .eq("id", playerData.id);
+      }
     await supabase
   .from("buzzes")
   .delete()
