@@ -617,6 +617,7 @@ useEffect(() => {
       {question.audio_url && (
         <div className="mt-8 flex justify-center">
           <audio
+            key={`${question.id || question.question_number}-${question.audio_url}`}
             ref={questionAudioRef}
             controls
             autoPlay
@@ -655,6 +656,7 @@ useEffect(() => {
       {question.audio_url && (
         <div className="mt-8 flex justify-center">
           <audio
+            key={`${question.id || question.question_number}-${question.audio_url}`}
             ref={questionAudioRef}
             controls
             autoPlay
@@ -693,6 +695,7 @@ useEffect(() => {
       {question.audio_url && (
         <div className="mt-8 flex justify-center">
           <audio
+            key={`${question.id || question.question_number}-${question.audio_url}`}
             ref={questionAudioRef}
             controls
             autoPlay
