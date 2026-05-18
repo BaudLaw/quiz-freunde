@@ -1118,30 +1118,6 @@ if (!hostUnlocked) {
                   </p>
                 </div>
               )}
-
-              {activeQuestion?.accepted_answers && (
-              <div className="bg-slate-700 rounded-xl p-3">
-                <p className="text-sm text-slate-400">
-                  Akzeptierte Antworten
-                </p>
-
-                <p>
-                  {activeQuestion.accepted_answers}
-                </p>
-              </div>
-            )}
-
-            {activeQuestion?.host_notes && (
-              <div className="bg-slate-700 rounded-xl p-3">
-                <p className="text-sm text-slate-400">
-                  Moderator Notizen
-                </p>
-
-                <p>
-                  {activeQuestion.host_notes}
-                </p>
-              </div>
-            )}
             </div>
 
             <div className="grid grid-cols-3 gap-4">
