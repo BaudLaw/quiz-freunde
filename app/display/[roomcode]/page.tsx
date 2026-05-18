@@ -722,7 +722,7 @@ useEffect(() => {
             onClick={() =>
               setZoomedImage(question.image_url)
             }
-            className="cursor-zoom-in max-h-[180px] rounded-3xl border-4 border-slate-700 shadow-2xl"
+            className="cursor-zoom-in max-h-[120px] rounded-3xl border-4 border-slate-700 shadow-2xl object-contain"
           />
         </div>
       )}
