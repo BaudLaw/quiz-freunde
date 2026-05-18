@@ -225,11 +225,16 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  const shouldPlay =
-    room?.game_state === "question" ||
-    room?.game_state === "buzzing_open" ||
-    room?.game_state === "player_answering";
+  const hasAudioQuestion =
+    !!question?.audio_url;
 
+  const shouldPlay =
+    !hasAudioQuestion &&
+    (
+      room?.game_state === "question" ||
+      room?.game_state === "buzzing_open" ||
+      room?.game_state === "player_answering"
+    );
   if (shouldPlay) {
     questionLoopRef.current
       ?.play()
