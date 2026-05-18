@@ -742,7 +742,7 @@ useEffect(() => {
               question.solution_image_url
             )
           }
-          className="cursor-zoom-in max-h-[260px] rounded-3xl border-4 border-slate-700 shadow-2xl"
+          className="cursor-zoom-in max-h-[140px] rounded-3xl border-4 border-slate-700 shadow-2xl object-contain"
         />
       </div>
     )}
