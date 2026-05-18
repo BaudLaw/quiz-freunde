@@ -324,10 +324,11 @@ useEffect(() => {
             </h1>
 
           {room.turn_player &&
-          room.game_state !== "finished" && (
-            <p className="text-xl text-yellow-400 font-bold">
-            Am Zug: {room.turn_player}
-            </p>
+            room.game_state !== "finished" &&
+            room.game_state !== "lobby" && (
+              <p className="text-xl text-yellow-400 font-bold">
+                Am Zug: {room.turn_player}
+              </p>
           )}
           </div>
 
