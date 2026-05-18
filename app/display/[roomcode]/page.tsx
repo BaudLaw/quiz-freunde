@@ -265,7 +265,7 @@ useEffect(() => {
   return (
     <main className="h-screen overflow-hidden bg-[#020617] text-white p-4">
       {room?.game_state === "lobby" && (
-        <div className="pointer-events-none fixed right-8 top-13 z-50 flex h-32 w-32 items-center justify-center">
+        <div className="pointer-events-none fixed right-8 top-16 z-50 flex h-32 w-32 items-center justify-center">
           <img
             src="/logo.png"
             alt="Logo"
