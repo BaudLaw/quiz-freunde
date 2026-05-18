@@ -37,6 +37,8 @@ export default function DisplayPage({
   const applauseSoundRef =
   useRef<HTMLAudioElement | null>(null);
   const timerEndPlayedRef = useRef(false);
+  const questionLoopRef =
+  useRef<HTMLAudioElement | null>(null);
   
 
   useEffect(() => {
@@ -212,9 +214,33 @@ useEffect(() => {
   applauseSoundRef.current =
     new Audio("/sounds/applause.mp3");
 
+  questionLoopRef.current =
+    new Audio("/sounds/question_loop.mp3");
+
   winnerSoundRef.current.volume = 0.8;
   applauseSoundRef.current.volume = 0.45;
+
+  questionLoopRef.current.loop = true;
+  questionLoopRef.current.volume = 0.25;
 }, []);
+
+useEffect(() => {
+  const shouldPlay =
+    room?.game_state === "question" ||
+    room?.game_state === "buzzing_open" ||
+    room?.game_state === "player_answering";
+
+  if (shouldPlay) {
+    questionLoopRef.current
+      ?.play()
+      .catch(() => {});
+  } else {
+    if (questionLoopRef.current) {
+      questionLoopRef.current.pause();
+      questionLoopRef.current.currentTime = 0;
+    }
+  }
+}, [room?.game_state]);
 
 useEffect(() => {
   if (!room?.timer_end) {
