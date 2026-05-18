@@ -728,12 +728,13 @@ useEffect(() => {
       )}
     </div>
 
-    <div className="mx-auto flex min-h-[120px] w-full max-w-6xl items-center justify-center rounded-3xl border-4 border-cyan-400/60 bg-slate-900/90 quiz-panel quiz-glow px-12 py-6 text-center text-4xl font-black text-green-400 shadow-2xl quiz-panel-enter">
-      {question.solution}
-    </div>
+    <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-center gap-4 rounded-3xl border-4 border-cyan-400/60 bg-slate-900/90 quiz-panel quiz-glow px-12 py-6 text-center shadow-2xl quiz-panel-enter">
 
-    {question.solution_image_url && (
-      <div className="mt-6 flex justify-center">
+      <div className="text-3xl font-black text-green-400">
+        {question.solution}
+      </div>
+
+      {question.solution_image_url && (
         <img
           src={question.solution_image_url}
           alt="Lösungsbild"
@@ -742,10 +743,10 @@ useEffect(() => {
               question.solution_image_url
             )
           }
-          className="cursor-zoom-in max-h-[80px] rounded-3xl border-4 border-slate-700 shadow-2xl object-contain"
+          className="cursor-zoom-in max-h-[80px] rounded-2xl border-4 border-slate-700 shadow-2xl object-contain"
         />
-      </div>
-    )}
+      )}
+    </div>
   </div>
 )}
 
