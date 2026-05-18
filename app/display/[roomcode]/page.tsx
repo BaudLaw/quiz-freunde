@@ -710,7 +710,7 @@ useEffect(() => {
 )}
 
 {room.game_state === "solution" && question && (
-  <div className="flex flex-1 flex-col justify-center gap-8 px-10">
+  <div className="flex flex-1 flex-col justify-center gap-4 px-10">
     <div className="mx-auto flex min-h-[180px] w-full max-w-6xl flex-col justify-center rounded-3xl border-4 border-cyan-400/60 bg-slate-900/90 quiz-panel quiz-glow px-14 py-8 text-center text-5xl font-black leading-tight shadow-2xl quiz-panel-enter">
       <div>{question.question}</div>
 
@@ -722,7 +722,7 @@ useEffect(() => {
             onClick={() =>
               setZoomedImage(question.image_url)
             }
-            className="cursor-zoom-in max-h-[120px] rounded-3xl border-4 border-slate-700 shadow-2xl object-contain"
+            className="cursor-zoom-in max-h-[80px] rounded-3xl border-4 border-slate-700 shadow-2xl object-contain"
           />
         </div>
       )}
@@ -742,7 +742,7 @@ useEffect(() => {
               question.solution_image_url
             )
           }
-          className="cursor-zoom-in max-h-[140px] rounded-3xl border-4 border-slate-700 shadow-2xl object-contain"
+          className="cursor-zoom-in max-h-[80px] rounded-3xl border-4 border-slate-700 shadow-2xl object-contain"
         />
       </div>
     )}
