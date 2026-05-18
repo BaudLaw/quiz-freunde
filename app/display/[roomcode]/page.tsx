@@ -41,6 +41,7 @@ export default function DisplayPage({
   const timerEndPlayedRef = useRef(false);
   const questionLoopRef =
   useRef<HTMLAudioElement | null>(null);
+  const solutionAudioPlayedRef = useRef("");
   
 
   useEffect(() => {
@@ -281,6 +282,32 @@ useEffect(() => {
     audio.play().catch(() => {});
   }
 }, [timeLeft, room]);
+
+useEffect(() => {
+  if (
+    room?.game_state === "solution" &&
+    question?.solution_audio_url &&
+    solutionAudioPlayedRef.current !==
+      question.solution_audio_url
+  ) {
+    solutionAudioPlayedRef.current =
+      question.solution_audio_url;
+
+    const audio = new Audio(
+      question.solution_audio_url
+    );
+
+    audio.volume = 0.9;
+    audio.play().catch(() => {});
+  }
+
+  if (room?.game_state !== "solution") {
+    solutionAudioPlayedRef.current = "";
+  }
+}, [
+  room?.game_state,
+  question?.solution_audio_url,
+]);
 
   if (!room) {
     return (
@@ -665,21 +692,6 @@ useEffect(() => {
           }
           className="cursor-zoom-in max-h-[260px] rounded-3xl border-4 border-slate-700 shadow-2xl"
         />
-      </div>
-    )}
-
-    {question.solution_audio_url && (
-      <div className="mt-6 flex justify-center">
-        <audio
-          key={`${room.game_state}-${question.solution_audio_url}`}
-          controls
-          autoPlay
-          className="w-full max-w-xl"
-        >
-          <source
-            src={question.solution_audio_url}
-          />
-        </audio>
       </div>
     )}
   </div>
