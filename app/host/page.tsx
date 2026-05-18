@@ -329,6 +329,16 @@ const zipQuizSetId = zipQuizSetResponse.data.id;
       uploadedAudioUrl ||
       "",
 
+    solution_audio_url:
+      row.solution_audio_url ||
+      row.solution_audio ||
+      "",
+
+    solution_image_url:
+      row.solution_image_url ||
+      row.solution_image ||
+      "",
+
     is_played: false,
   })
 );
@@ -432,8 +442,17 @@ const zipQuizSetId = zipQuizSetResponse.data.id;
     host_notes:
       q.host_notes,
 
-    image_url: q.image_url,
-    audio_url: q.audio_url,
+    image_url: 
+      q.image_url,
+
+    audio_url:
+      q.audio_url,
+      
+    solution_audio_url:
+      q.solution_audio_url,
+
+    solution_image_url:
+      q.solution_image_url,
 
     is_played: false,
   })) || [];
@@ -689,6 +708,16 @@ async function processZipImport() {
         uploadedFiles[row.audio?.trim()] ||
         row.audio_url ||
         "",
+      
+      solution_audio_url:
+        uploadedFiles[
+          row.solution_audio?.trim()
+        ] || "",
+
+      solution_image_url:
+        uploadedFiles[
+          row.solution_image?.trim()
+        ] || "",
 
       is_played: false,
     })
