@@ -245,7 +245,10 @@ useEffect(() => {
       questionLoopRef.current.currentTime = 0;
     }
   }
-}, [room?.game_state]);
+}, [
+  room?.game_state,
+  question?.audio_url,
+]);
 
 useEffect(() => {
   if (!room?.timer_end) {
