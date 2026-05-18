@@ -426,6 +426,12 @@ const zipQuizSetId = zipQuizSetResponse.data.id;
 
     solution: q.solution,
 
+    accepted_answers:
+      q.accepted_answers,
+
+    host_notes:
+      q.host_notes,
+
     image_url: q.image_url,
     audio_url: q.audio_url,
 
