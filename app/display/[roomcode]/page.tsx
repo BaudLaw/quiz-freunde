@@ -361,7 +361,7 @@ useEffect(() => {
           {room.turn_player &&
             room.game_state !== "finished" &&
             room.game_state !== "lobby" && (
-              <p className="text-xl text-yellow-400 font-bold">
+              <p className="text-xl text-white font-bold">
                 Am Zug: {room.turn_player}
               </p>
           )}
@@ -375,7 +375,7 @@ useEffect(() => {
                Punkte
               </p>
 
-              <p className="text-3xl font-black text-yellow-400">
+              <p className="text-3xl font-black text-white">
                 {question?.points || "-"}
               </p>
             </div>
