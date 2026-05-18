@@ -1097,11 +1097,11 @@ if (!hostUnlocked) {
 
               {activeQuestion?.accepted_answers && (
                 <div className="rounded-xl border border-cyan-400/40 bg-slate-900/80 p-3">
-                  <p className="text-sm text-white">
+                  <p className="text-sm text-white/50">
                     Alternative Antworten
                   </p>
 
-                  <p className="text-cyan-300">
+                  <p className="text-white">
                     {activeQuestion.accepted_answers}
                   </p>
                 </div>
@@ -1109,11 +1109,11 @@ if (!hostUnlocked) {
 
               {activeQuestion?.host_notes && (
                 <div className="rounded-xl border border-purple-400/40 bg-slate-900/80 p-3">
-                  <p className="text-sm text-white">
+                  <p className="text-sm text-white/50">
                     Moderator Notizen
                   </p>
 
-                  <p className="text-purple-300">
+                  <p className="text-white">
                     {activeQuestion.host_notes}
                   </p>
                 </div>
