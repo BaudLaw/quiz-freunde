@@ -16,6 +16,76 @@ function generateCode() {
   return code;
 }
 
+type QuizSetValidationQuestion = {
+  category: string;
+  points: number;
+};
+
+function validateQuizSetForBoard(
+  questions: QuizSetValidationQuestion[]
+) {
+  const warnings: string[] = [];
+  const requiredPoints = [100, 200, 300, 400, 500];
+
+  if (questions.length === 0) {
+    return {
+      isBoardValid: false,
+      warnings: ["Dieses Quiz-Set enthält keine Fragen."],
+    };
+  }
+
+  const categories = Array.from(
+    new Set(questions.map((question) => question.category).filter(Boolean))
+  );
+
+  if (categories.length > 6) {
+    warnings.push(
+      `Zu viele Kategorien: ${categories.length} vorhanden, maximal 6 erlaubt.`
+    );
+  }
+
+  for (const category of categories) {
+    const categoryQuestions = questions.filter(
+      (question) => question.category === category
+    );
+
+    if (categoryQuestions.length !== 5) {
+      warnings.push(
+        `Kategorie "${category}" enthält ${categoryQuestions.length} Fragen statt 5.`
+      );
+    }
+
+    const pointsInCategory = categoryQuestions.map(
+      (question) => Number(question.points)
+    );
+
+    for (const requiredPoint of requiredPoints) {
+      if (!pointsInCategory.includes(requiredPoint)) {
+        warnings.push(
+          `Kategorie "${category}" fehlt ${requiredPoint} Punkte.`
+        );
+      }
+    }
+
+    const duplicatePoints = pointsInCategory.filter(
+      (point, index) => pointsInCategory.indexOf(point) !== index
+    );
+
+    const uniqueDuplicatePoints = Array.from(new Set(duplicatePoints));
+
+    for (const duplicatePoint of uniqueDuplicatePoints) {
+      warnings.push(
+        `Kategorie "${category}" enthält ${duplicatePoint} Punkte mehrfach.`
+      );
+    }
+  }
+
+  return {
+    isBoardValid: warnings.length === 0,
+    warnings,
+  };
+}
+
 function parseCSV(text: string) {
   const lines = text.trim().split("\n");
 
@@ -108,16 +178,50 @@ export default function HostPage() {
     return () => clearInterval(interval);
   }, [roomCode]);
 
-  async function loadQuizSets() {
-    const { data } = await supabase
-      .from("quiz_sets")
-      .select("*")
-      .order("created_at", {
-        ascending: false,
-      });
+async function loadQuizSets() {
+  const { data, error } = await supabase
+    .from("quiz_sets")
+    .select("*")
+    .order("created_at", {
+      ascending: false,
+    });
 
-    setSavedQuizSets(data || []);
+  if (error) {
+    alert("Quiz-Sets konnten nicht geladen werden: " + error.message);
+    return;
   }
+
+  const quizSetsWithValidation = await Promise.all(
+    (data || []).map(async (quizSet: any) => {
+      const { data: questionsData, error: questionsError } = await supabase
+        .from("questions")
+        .select("category, points")
+        .eq("quiz_set_id", quizSet.id);
+
+      if (questionsError) {
+        console.error(
+          "Quiz-Set-Fragen konnten für die Host-Validierung nicht geladen werden:",
+          questionsError
+        );
+      }
+
+      const validation = validateQuizSetForBoard(
+        (questionsData || []).map((question: any) => ({
+          category: question.category,
+          points: Number(question.points),
+        }))
+      );
+
+      return {
+        ...quizSet,
+        question_count: questionsData?.length || 0,
+        validation,
+      };
+    })
+  );
+
+  setSavedQuizSets(quizSetsWithValidation);
+}
 
   async function loadQuizEditor(
   quizSetId: string
@@ -196,9 +300,10 @@ async function saveQuizEditor() {
     return;
   }
 
-  alert("Quiz gespeichert");
+alert("Quiz gespeichert");
 
-  await loadQuizEditor(editingQuiz.id);
+await loadQuizSets();
+await loadQuizEditor(editingQuiz.id);
 }
 
   async function loadRoomData() {
@@ -383,6 +488,45 @@ const zipQuizSetId = zipQuizSetResponse.data.id;
         (q) => q.id === quizSetId
       );
 
+    const { data: questionsData, error: loadQuestionsError } =
+      await supabase
+        .from("questions")
+        .select("*")
+        .eq("quiz_set_id", quizSetId)
+        .order("question_number", {
+          ascending: true,
+        });
+
+    if (loadQuestionsError) {
+      alert(
+        "Fragen konnten nicht geladen werden: " +
+          loadQuestionsError.message
+      );
+      return;
+    }
+
+    if (!questionsData || questionsData.length === 0) {
+      alert(
+        "Dieses Quiz-Set enthält keine Fragen. Das Quiz kann nicht gehostet werden."
+      );
+      return;
+    }
+
+const quizSetValidation = validateQuizSetForBoard(
+  questionsData.map((question: any) => ({
+    category: question.category,
+    points: Number(question.points),
+  }))
+);
+
+if (!quizSetValidation.isBoardValid) {
+  alert(
+    "Dieses Quiz-Set ist nicht board-konform und kann nicht gehostet werden.\n\n" +
+      quizSetValidation.warnings.join("\n")
+  );
+  return;
+}
+
     const { error: roomError } =
       await supabase
         .from("rooms")
@@ -411,24 +555,12 @@ const zipQuizSetId = zipQuizSetResponse.data.id;
       return;
     }
 
-    const { data: questionsData } =
-      await supabase
-        .from("questions")
-        .select("*")
-        .eq("quiz_set_id", quizSetId)
-        .order("question_number", {
-          ascending: true,
-        });
-
-    const copiedQuestions =
-  questionsData?.map((q: any) => ({
-    room_code: newRoomCode,
-
+const copiedQuestions =
+  questionsData.map((q: any, index: number) => ({
     quiz_set_id: null,
-
-    question_number:
-      q.question_number,
-
+    room_code: newRoomCode,
+    source_pool_question_id: q.source_pool_question_id,
+    question_number: index + 1,
     category: q.category,
     points: q.points,
 
@@ -437,46 +569,52 @@ const zipQuizSetId = zipQuizSetResponse.data.id;
     solution: q.solution,
 
     accepted_answers:
-      q.accepted_answers,
+      q.accepted_answers || [],
 
     host_notes:
-      q.host_notes,
+      q.host_notes || "",
 
-    image_url: 
-      q.image_url,
+    image_url:
+      q.image_url || "",
 
     audio_url:
-      q.audio_url,
-      
+      q.audio_url || "",
+
     solution_audio_url:
-      q.solution_audio_url,
+      q.solution_audio_url || "",
 
     solution_image_url:
-      q.solution_image_url,
+      q.solution_image_url || "",
 
     is_played: false,
-  })) || [];
+  }));
+
     const { error: questionError } =
       await supabase
         .from("questions")
-        .insert(copiedQuestions); 
+        .insert(copiedQuestions);
 
     if (questionError) {
-      alert(questionError.message);
+      alert(
+        "Fragen konnten nicht in den Raum kopiert werden: " +
+          questionError.message
+      );
       return;
     }
 
     setRoomCode(newRoomCode);
 
-const { data: newRoomData } = await supabase
-  .from("rooms")
-  .select("*")
-  .eq("code", newRoomCode)
-  .single();
+    const { data: newRoomData } = await supabase
+      .from("rooms")
+      .select("*")
+      .eq("code", newRoomCode)
+      .single();
 
-setRoom(newRoomData);
+    setRoom(newRoomData);
 
-alert("Quiz gestartet");
+    alert(
+      `Quiz gestartet. ${copiedQuestions.length} Fragen wurden in den Raum kopiert.`
+    );
   }
 
   async function setGameState(state: string) {
@@ -1306,33 +1444,63 @@ if (!hostUnlocked) {
           </button>
 
           {showQuizList &&
-            savedQuizSets.map((quiz: any) => (
-              <div
-                key={quiz.id || quiz.tempId}
-                className="bg-slate-800 rounded-2xl p-4 flex justify-between items-center gap-3"
-              >
-                  <p>{quiz.title}</p>
+savedQuizSets.map((quiz: any) => (
+  <div
+    key={quiz.id || quiz.tempId}
+    className="bg-slate-800 rounded-2xl p-4 flex justify-between items-start gap-3"
+  >
+    <div className="space-y-2">
+      <p className="font-bold">{quiz.title}</p>
 
-                <div className="flex gap-2">
-                  <button
-                  onClick={() => hostQuiz(quiz.id)}
-                  className="bg-green-600 rounded-xl px-4 py-2 font-bold"
-                  >
-                  Hosten
-                  </button>
+      <p className="text-sm text-slate-400">
+        {quiz.question_count || 0} Fragen
+      </p>
 
-                  <button
-                   onClick={() =>
-                   loadQuizEditor(quiz.id)
-                   }
-                   className="bg-cyan-500 text-black rounded-xl px-4 py-2 font-bold"
-                 >
-                   Bearbeiten
-                  </button>
-                </div>
-              </div>
+      <div
+        className={
+          quiz.validation?.isBoardValid
+            ? "inline-block rounded-lg border border-green-400 bg-green-950 px-3 py-1 text-sm font-bold text-green-300"
+            : "inline-block rounded-lg border border-yellow-400 bg-yellow-950 px-3 py-1 text-sm font-bold text-yellow-300"
+        }
+      >
+        {quiz.validation?.isBoardValid
+          ? "Board-konform"
+          : "Nicht board-konform"}
+      </div>
+
+      {!quiz.validation?.isBoardValid &&
+        quiz.validation?.warnings?.length > 0 && (
+          <ul className="list-disc pl-5 text-sm text-yellow-300">
+            {quiz.validation.warnings.map((warning: string) => (
+              <li key={warning}>{warning}</li>
             ))}
-        </div>
+          </ul>
+        )}
+    </div>
+
+    <div className="flex gap-2">
+      <button
+        onClick={() => hostQuiz(quiz.id)}
+        disabled={!quiz.validation?.isBoardValid}
+        className={
+          quiz.validation?.isBoardValid
+            ? "bg-green-600 rounded-xl px-4 py-2 font-bold"
+            : "bg-slate-600 text-slate-300 rounded-xl px-4 py-2 font-bold cursor-not-allowed"
+        }
+      >
+        Hosten
+      </button>
+
+      <button
+        onClick={() => loadQuizEditor(quiz.id)}
+        className="bg-cyan-500 text-black rounded-xl px-4 py-2 font-bold"
+      >
+        Bearbeiten
+      </button>
+    </div>
+  </div>
+))}
+</div>
 
         {editingQuiz && (
           <div className="quiz-panel rounded-3xl p-6 space-y-4">

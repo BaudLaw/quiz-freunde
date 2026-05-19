@@ -115,24 +115,33 @@ if (!roomData.feedback) {
   lastFeedbackRef.current = "";
 }
 
-      const { data: questionData } = await supabase
-        .from("questions")
-        .select("*")
-        .eq("room_code", roomCode)
-        .eq("question_number", roomData.current_question)
-        .single();
+const { data: questionData, error: questionError } = await supabase
+  .from("questions")
+  .select("*")
+  .eq("room_code", roomCode)
+  .eq("question_number", roomData.current_question)
+  .maybeSingle();
 
-      setQuestion(questionData);
+if (questionError) {
+  console.error("DISPLAY QUESTION ERROR", questionError);
+}
 
-      const { data: allQuestionsData } = await supabase
-        .from("questions")
-        .select("*")
-        .eq("room_code", roomCode)
-        .order("question_number", {
-          ascending: true,
-        });
+setQuestion(questionData || null);
+
+        const { data: allQuestionsData } = await supabase
+          .from("questions")
+          .select("*")
+          .eq("room_code", roomCode)
+          .order("question_number", {
+            ascending: true,
+          });
 
       setAllQuestions(allQuestionsData || []);
+
+console.log("DISPLAY ROOM", roomCode);
+console.log("DISPLAY CURRENT QUESTION", roomData.current_question);
+console.log("DISPLAY ALL QUESTIONS", allQuestionsData);
+console.log("DISPLAY CURRENT QUESTION DATA", questionData);
 
         const { data: playerData } = await supabase
         .from("players")
