@@ -999,8 +999,7 @@ return (
     title="Generator"
     subtitle="Aus aktiven Pool-Fragen board-konforme Quiz-Sets erstellen."
   >
-
-
+    
       <h2>Pools</h2>
       <div
   style={{
