@@ -21,6 +21,23 @@ export default function Home() {
 >
   Quiz beitreten
 </a>
+
+<a
+  href="/admin"
+  style={{
+    display: "inline-block",
+    marginBottom: 24,
+    padding: "10px 14px",
+    background: "#003366",
+    color: "white",
+    border: "1px solid #0066aa",
+    textDecoration: "none",
+    fontWeight: "bold",
+  }}
+>
+  Admin-Dashboard
+</a>
+
         </div>
       </div>
     </main>

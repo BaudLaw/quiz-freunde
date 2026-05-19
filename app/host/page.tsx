@@ -1107,6 +1107,23 @@ if (!hostUnlocked) {
 
   return (
   <main className="min-h-screen bg-[#020617] text-white p-8">
+
+<a
+  href="/admin"
+  style={{
+    display: "inline-block",
+    marginBottom: 24,
+    padding: "10px 14px",
+    background: "#003366",
+    color: "white",
+    border: "1px solid #0066aa",
+    textDecoration: "none",
+    fontWeight: "bold",
+  }}
+>
+  Zum Admin-Dashboard
+</a>
+
     <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 xl:grid-cols-[1.4fr_0.6fr]">
 
       <div className="space-y-6">

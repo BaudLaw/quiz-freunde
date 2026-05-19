@@ -800,6 +800,7 @@ async function handleDeleteQuizSet(quizSetId: string, title: string) {
         style={{
             display: "inline-block",
             marginBottom: 24,
+            marginRight: 12,
             padding: "10px 14px",
             background: "#003366",
             color: "white",
@@ -809,6 +810,22 @@ async function handleDeleteQuizSet(quizSetId: string, title: string) {
         }}
       >
         Zurück zu den Pools
+      </a>
+
+      <a
+        href="/admin"
+        style={{
+            display: "inline-block",
+            marginBottom: 24,
+            padding: "10px 14px",
+            background: "#003366",
+            color: "white",
+            border: "1px solid #0066aa",
+            textDecoration: "none",
+            fontWeight: "bold",
+        }}
+      >
+        Zum Admin-Dashboard
       </a>
 
       <p style={{ color: "gray" }}>
