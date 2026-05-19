@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 import { supabase } from "@/lib/supabase";
 import JSZip from "jszip";
+import AdminLayout from "@/components/AdminLayout";
 
 function generateCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -1105,31 +1106,13 @@ if (!hostUnlocked) {
   );
 }
 
-  return (
-  <main className="min-h-screen bg-[#020617] text-white p-8">
-
-<a
-  href="/admin"
-  style={{
-    display: "inline-block",
-    marginBottom: 24,
-    padding: "10px 14px",
-    background: "#003366",
-    color: "white",
-    border: "1px solid #0066aa",
-    textDecoration: "none",
-    fontWeight: "bold",
-  }}
->
-  Zum Admin-Dashboard
-</a>
-
+return (
+  <AdminLayout
+    title="Baud_iful Quiz"
+    subtitle="Board-konforme Quiz-Sets starten und Spielräume erzeugen."
+  >
     <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 xl:grid-cols-[1.4fr_0.6fr]">
-
       <div className="space-y-6">
-        <h1 className="text-5xl font-black">
-          Baud_iful Quizz Host
-        </h1>
 
         {roomCode && (
           <div className="quiz-panel rounded-3xl p-6 space-y-6">
@@ -1808,6 +1791,6 @@ savedQuizSets.map((quiz: any) => (
         </div>
       </div>
     </div>
-  </main>
+</AdminLayout>
 );
 }

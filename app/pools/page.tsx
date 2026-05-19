@@ -11,6 +11,9 @@ import {
 } from "@/lib/pools";
 import type { PoolQuestion, QuestionPool } from "@/lib/poolTypes";
 import { generateQuizFromPoolQuestions } from "@/lib/generator";
+import AdminButton from "@/components/AdminButton";
+import AdminCard from "@/components/AdminCard";
+import AdminLayout from "@/components/AdminLayout";
 
 type QuizSetOption = {
   id: string;
@@ -993,61 +996,12 @@ setGeneratedQuizSetId(null);
     setQuestions(data ?? []);
   }
 
-  return ( 
-    <main style={{ padding: 24 }}>
-      <h1>Question Pools</h1>
-
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 24 }}>
-      <a
-        href="/generator"
-        style={{
-          display: "inline-block",
-          marginBottom: 24,
-          padding: "10px 14px",
-          background: "#003366",
-          color: "white",
-          border: "1px solid #0066aa",
-          textDecoration: "none",
-          fontWeight: "bold",
-        }}
-      >
-        Zum Generator
-      </a>
-
-      <a
-        href="/quiz-sets"
-        style={{
-          display: "inline-block",
-          marginBottom: 24,
-          padding: "10px 14px",
-          background: "#003366",
-          color: "white",
-          border: "1px solid #0066aa",
-          textDecoration: "none",
-          fontWeight: "bold",
-        }}
-      >
-        Zur Quiz-Set-Verwaltung
-      </a>
-
-<a
-  href="/admin"
-  style={{
-    display: "inline-block",
-    marginBottom: 24,
-    padding: "10px 14px",
-    background: "#003366",
-    color: "white",
-    border: "1px solid #0066aa",
-    textDecoration: "none",
-    fontWeight: "bold",
-  }}
->
-  Zum Admin-Dashboard
-</a>
-
-      </div>
-
+return (
+  <AdminLayout
+    title="Fragenpools"
+    subtitle="Pools verwalten, Fragen erfassen, Medien hochladen und CSV-Dateien importieren."
+  >
+    
       <h2>Pools</h2>
       <div
   style={{
@@ -1777,6 +1731,6 @@ setGeneratedQuizSetId(null);
           )}
         </div>
       ))}
-</main>
+</AdminLayout>
   );
 }

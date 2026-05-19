@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { PoolQuestion } from "@/lib/poolTypes";
+import AdminLayout from "@/components/AdminLayout";
 
 type QuizSetValidationCategorySummary = {
   category: string;
@@ -774,59 +775,11 @@ async function handleDeleteQuizSet(quizSetId: string, title: string) {
     setQuizSetQuestions((data || []) as QuizSetQuestion[]);
   }
 
-  return (
-    <main style={{ padding: 24 }}>
-      <h1>Quiz-Sets</h1>
-
-      <a
-        href="/generator"
-        style={{
-            display: "inline-block",
-            marginBottom: 24,
-            marginRight: 12,
-            padding: "10px 14px",
-            background: "#003366",
-            color: "white",
-            border: "1px solid #0066aa",
-            textDecoration: "none",
-            fontWeight: "bold",
-        }}
-        >
-        Zum Generator
-      </a>
-
-      <a
-        href="/pools"
-        style={{
-            display: "inline-block",
-            marginBottom: 24,
-            marginRight: 12,
-            padding: "10px 14px",
-            background: "#003366",
-            color: "white",
-            border: "1px solid #0066aa",
-            textDecoration: "none",
-            fontWeight: "bold",
-        }}
-      >
-        Zurück zu den Pools
-      </a>
-
-      <a
-        href="/admin"
-        style={{
-            display: "inline-block",
-            marginBottom: 24,
-            padding: "10px 14px",
-            background: "#003366",
-            color: "white",
-            border: "1px solid #0066aa",
-            textDecoration: "none",
-            fontWeight: "bold",
-        }}
-      >
-        Zum Admin-Dashboard
-      </a>
+return (
+  <AdminLayout
+    title="Quiz-Sets"
+    subtitle="Fertige Quiz-Sets prüfen, reparieren, duplizieren, umbenennen oder löschen."
+  >
 
       <p style={{ color: "gray" }}>
         Verwaltung der fertigen Quiz-Sets.
@@ -1232,6 +1185,6 @@ async function handleDeleteQuizSet(quizSetId: string, title: string) {
           </div>
         )}
       </section>
-    </main>
+</AdminLayout>
   );
 }
