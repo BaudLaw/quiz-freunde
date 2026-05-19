@@ -995,27 +995,27 @@ setGeneratedQuizSetId(null);
 
   return ( 
     <main style={{ padding: 24 }}>
-      <h1>Question Pools</h1>
+      <h1>Quiz erstellen</h1>
 
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 24 }}>
-      <a
-        href="/generator"
-        style={{
-          display: "inline-block",
-          marginBottom: 24,
-          padding: "10px 14px",
-          background: "#003366",
-          color: "white",
-          border: "1px solid #0066aa",
-          textDecoration: "none",
-          fontWeight: "bold",
-        }}
-      >
-        Zum Generator
-      </a>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 24 }}>
+        <a
+            href="/pools"
+            style={{
+            display: "inline-block",
+            marginBottom: 24,
+            padding: "10px 14px",
+            background: "#003366",
+            color: "white",
+            border: "1px solid #0066aa",
+            textDecoration: "none",
+            fontWeight: "bold",
+            }}
+        >
+            Zur Pool-Verwaltung
+        </a>
 
-      <a
-        href="/quiz-sets"
+        <a
+            href="/quiz-sets"
         style={{
           display: "inline-block",
           marginBottom: 24,
@@ -1112,6 +1112,321 @@ setGeneratedQuizSetId(null);
       ))}
 
       <h2>Fragen</h2>
+
+      <div
+        style={{
+          border: "1px solid gray",
+          padding: 16,
+          marginBottom: 24,
+          maxWidth: 700,
+          background: "#050505",
+        }}
+      >
+        <h3>Generator-Vorschau</h3>
+
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ display: "block", marginBottom: 6 }}>
+            Ziel-Quiz-Set
+          </label>
+          <select
+            value={targetQuizSetId}
+onChange={(event) => {
+  setTargetQuizSetId(event.target.value);
+  setGeneratorMode("append");
+}}
+            style={{
+              width: "100%",
+              padding: 10,
+              background: "#111",
+              color: "white",
+              border: "1px solid #444",
+              marginBottom: 12,
+            }}
+          >
+            <option value="">Neues Quiz-Set erstellen</option>
+            {quizSetOptions.map((quizSet) => (
+              <option key={quizSet.id} value={quizSet.id}>
+                {quizSet.title}
+              </option>
+            ))}
+          </select>
+
+{targetQuizSetId && (
+  <div style={{ marginBottom: 12 }}>
+    <label style={{ display: "block", marginBottom: 6 }}>
+      Umgang mit bestehenden Fragen
+    </label>
+    <select
+      value={generatorMode}
+      onChange={(event) =>
+        setGeneratorMode(event.target.value as "append" | "replace")
+      }
+      style={{
+        width: "100%",
+        padding: 10,
+        background: "#111",
+        color: "white",
+        border: "1px solid #444",
+      }}
+    >
+      <option value="append">Fragen anhängen</option>
+      <option value="replace">Bestehende Generator-Fragen ersetzen</option>
+    </select>
+  </div>
+)}
+
+          <label style={{ display: "block", marginBottom: 6 }}>
+            Titel für neues Quiz
+          </label>
+          <input
+            value={generatorQuizTitle}
+            onChange={(event) => setGeneratorQuizTitle(event.target.value)}
+            style={{
+              width: "100%",
+              padding: 10,
+              background: "#111",
+              color: "white",
+              border: "1px solid #444",
+            }}
+          />
+        </div>       
+
+        <p style={{ color: "gray", fontSize: 14 }}>
+          Erstellt eine Vorschau aus aktiven Pool-Fragen. Es wird noch nichts ins Quiz kopiert.
+        </p>
+
+<div
+  style={{
+    marginBottom: 20,
+    padding: 12,
+    border: "1px solid #333",
+    background: "#080808",
+  }}
+>
+  <h3 style={{ marginTop: 0 }}>
+    Board-Quiz 6 × 5
+  </h3>
+
+  <p style={{ color: "gray", fontSize: 14 }}>
+    Wähle bis zu 6 Kategorien. Pro Kategorie wird je eine Frage mit Schwierigkeit 1 bis 5 zufällig ausgewählt.
+  </p>
+
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+      gap: 8,
+      marginBottom: 12,
+    }}
+  >
+    {availableBoardCategories.map((category) => {
+      const isSelected =
+        selectedBoardCategories.includes(category);
+
+      return (
+        <label
+          key={category}
+          style={{
+            display: "flex",
+            gap: 8,
+            alignItems: "center",
+            padding: 8,
+            border: isSelected
+              ? "1px solid #00ff88"
+              : "1px solid #333",
+            background: isSelected ? "#002b18" : "#111",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => toggleBoardCategory(category)}
+          />
+          {category}
+        </label>
+      );
+    })}
+  </div>
+
+  <p style={{ color: "gray", fontSize: 14 }}>
+    Ausgewählt: {selectedBoardCategories.length} / 6 Kategorien
+  </p>
+
+  <button
+    onClick={handleGenerateBoardQuizPreview}
+    style={{
+      padding: 12,
+      background: "#00ff88",
+      color: "black",
+      border: "none",
+      fontWeight: "bold",
+      cursor: "pointer",
+    }}
+  >
+    Board-Quiz-Vorschau generieren
+  </button>
+</div>
+
+<label style={{ display: "block", marginBottom: 6 }}>
+  Generator-Regel
+</label>
+
+<select
+  value={generatorRuleMode}
+  onChange={(event) =>
+    setGeneratorRuleMode(
+      event.target.value as "random" | "balancedDifficulty"
+    )
+  }
+  style={{
+    width: "100%",
+    padding: 10,
+    marginBottom: 12,
+    background: "#111",
+    color: "white",
+    border: "1px solid gray",
+  }}
+>
+  <option value="random">Zufällige Auswahl</option>
+  <option value="balancedDifficulty">
+    Ausgewogene Schwierigkeit 1 bis 5
+  </option>
+</select>
+
+        <input
+          type="text"
+          placeholder="Kategorie optional, z.B. Musik"
+          value={generatorCategory}
+          onChange={(e) => setGeneratorCategory(e.target.value)}
+          style={{
+            width: "100%",
+            padding: 10,
+            marginBottom: 12,
+            background: "#111",
+            color: "white",
+            border: "1px solid gray",
+          }}
+        />
+
+        <select
+          value={generatorDifficulty}
+          onChange={(e) => setGeneratorDifficulty(e.target.value)}
+          style={{
+            width: "100%",
+            padding: 10,
+            marginBottom: 12,
+            background: "#111",
+            color: "white",
+            border: "1px solid gray",
+          }}
+        >
+          <option value="">Alle Schwierigkeiten</option>
+          <option value="1">Schwierigkeit 1</option>
+          <option value="2">Schwierigkeit 2</option>
+          <option value="3">Schwierigkeit 3</option>
+          <option value="4">Schwierigkeit 4</option>
+          <option value="5">Schwierigkeit 5</option>
+        </select>
+
+        <input
+          type="number"
+          min={1}
+          max={50}
+          value={generatorAmount}
+          onChange={(e) => setGeneratorAmount(Number(e.target.value))}
+          style={{
+            width: "100%",
+            padding: 10,
+            marginBottom: 12,
+            background: "#111",
+            color: "white",
+            border: "1px solid gray",
+          }}
+        />
+
+        <button
+          onClick={handleGeneratePreview}
+          style={{
+            padding: "10px 16px",
+            background: "white",
+            color: "black",
+            border: "none",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          Vorschau generieren
+        </button>
+
+        <button
+          onClick={handleGenerateQuiz}
+          disabled={isGeneratingQuiz || generatorPreview.length === 0}
+          style={{
+            padding: "10px 16px",
+            background: generatorPreview.length === 0 ? "#555" : "#00ff88",
+            color: "black",
+            border: "none",
+            cursor: generatorPreview.length === 0 ? "not-allowed" : "pointer",
+            fontWeight: "bold",
+            marginLeft: 12,
+          }}
+        >
+          {isGeneratingQuiz ? "Quiz wird generiert..." : "Quiz aus Vorschau generieren"}
+        </button>
+
+        {generatedQuizSetId && (
+          <p style={{ color: "#00ff88", marginTop: 12 }}>
+            Generiertes Quiz-Set: {generatedQuizSetId}
+          </p>
+        )}
+
+{generatorWarnings.length > 0 && (
+  <div
+    style={{
+      marginTop: 12,
+      padding: 12,
+      border: "1px solid #ffaa00",
+      background: "#1a1200",
+      color: "#ffaa00",
+    }}
+  >
+    <strong>Generator-Warnungen</strong>
+
+    <ul style={{ marginBottom: 0 }}>
+      {generatorWarnings.map((warning) => (
+        <li key={warning}>{warning}</li>
+      ))}
+    </ul>
+  </div>
+)}       
+
+        {generatorPreview.length > 0 && (
+          <div style={{ marginTop: 16 }}>
+            <h4>Vorschau</h4>
+
+            {generatorPreview.map((question, index) => (
+              <div
+                key={question.id}
+                style={{
+                  border: "1px solid #333",
+                  padding: 12,
+                  marginBottom: 8,
+                  background: "#080808",
+                  color: "white",
+                }}
+              >
+                <strong>
+                  {index + 1}. {question.category}
+                </strong>
+                <p>{question.question}</p>
+                <p>Lösung: {question.solution}</p>
+                <p>Schwierigkeit: {question.difficulty}</p>
+                <p>Punkte: {question.difficulty * 100}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div
         style={{

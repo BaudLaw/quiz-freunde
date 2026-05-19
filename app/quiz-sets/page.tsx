@@ -779,6 +779,23 @@ async function handleDeleteQuizSet(quizSetId: string, title: string) {
       <h1>Quiz-Sets</h1>
 
       <a
+        href="/generator"
+        style={{
+            display: "inline-block",
+            marginBottom: 24,
+            marginRight: 12,
+            padding: "10px 14px",
+            background: "#003366",
+            color: "white",
+            border: "1px solid #0066aa",
+            textDecoration: "none",
+            fontWeight: "bold",
+        }}
+        >
+        Zum Generator
+      </a>
+
+      <a
         href="/pools"
         style={{
             display: "inline-block",
