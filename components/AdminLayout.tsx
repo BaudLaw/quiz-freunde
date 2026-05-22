@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import AdminAuthGate from "@/components/AdminAuthGate";
 
 type AdminLayoutProps = {
   title: string;
@@ -123,7 +124,7 @@ export default function AdminLayout({
             gap: 20,
           }}
         >
-          {children}
+        <AdminAuthGate>{children}</AdminAuthGate>
         </section>
       </div>
     </main>
