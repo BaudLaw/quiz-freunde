@@ -70,3 +70,26 @@ export async function deleteQuizSetQuestion(id: string) {
 
   return result;
 }
+
+export async function insertQuizSetQuestions(questions: unknown[]) {
+  const response = await fetch("/api/admin/quiz-set-questions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ questions }),
+  });
+
+  const result = (await response.json().catch(() => null)) as
+    | QuizSetResponse<{ insertedCount: number }>
+    | null;
+
+  if (!result) {
+    return {
+      data: null,
+      error: { message: "Fragen konnten nicht eingefuegt werden." },
+    };
+  }
+
+  return result;
+}

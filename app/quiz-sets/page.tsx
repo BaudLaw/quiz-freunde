@@ -8,6 +8,7 @@ import { incrementPoolQuestionUsage } from "@/lib/poolQuestionUsage";
 import {
   deleteQuizSetQuestion,
   duplicateQuizSet,
+  insertQuizSetQuestions,
   updateQuizSetTitle,
 } from "@/lib/quizSets";
 
@@ -502,9 +503,7 @@ async function handleFillMissingQuizSetQuestions(quizSetId: string) {
     return;
   }
 
-  const { error: insertError } = await supabase
-    .from("questions")
-    .insert(questionsToInsert);
+  const { error: insertError } = await insertQuizSetQuestions(questionsToInsert);
 
   if (insertError) {
     alert("Fehlende Fragen konnten nicht ergänzt werden: " + insertError.message);
