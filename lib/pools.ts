@@ -52,11 +52,26 @@ export async function getPoolQuestions(poolId: string) {
 }
 
 export async function createPoolQuestion(input: Partial<PoolQuestion>) {
-  return supabase
-    .from("pool_questions")
-    .insert(input)
-    .select()
-    .single();
+  const response = await fetch("/api/admin/pool-questions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
+  });
+
+  const result = (await response.json().catch(() => null)) as
+    | ApiResponse<PoolQuestion>
+    | null;
+
+  if (!result) {
+    return {
+      data: null,
+      error: { message: "Frage konnte nicht erstellt werden." },
+    };
+  }
+
+  return result;
 }
 
 export async function updatePoolQuestion(
