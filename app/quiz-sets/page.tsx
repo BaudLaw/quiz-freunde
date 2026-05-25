@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import type { PoolQuestion } from "@/lib/poolTypes";
 import AdminLayout from "@/components/AdminLayout";
 import { incrementPoolQuestionUsage } from "@/lib/poolQuestionUsage";
+import { updateQuizSetTitle } from "@/lib/quizSets";
 
 type QuizSetValidationCategorySummary = {
   category: string;
@@ -213,12 +214,7 @@ async function handleRenameQuizSet(quizSetId: string, currentTitle: string) {
     return;
   }
 
-  const { error } = await supabase
-    .from("quiz_sets")
-    .update({
-      title: cleanedTitle,
-    })
-    .eq("id", quizSetId);
+  const { error } = await updateQuizSetTitle(quizSetId, cleanedTitle);
 
   if (error) {
     alert("Quiz-Set konnte nicht umbenannt werden: " + error.message);
