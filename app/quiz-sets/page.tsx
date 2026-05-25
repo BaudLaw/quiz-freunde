@@ -5,7 +5,11 @@ import { supabase } from "@/lib/supabase";
 import type { PoolQuestion } from "@/lib/poolTypes";
 import AdminLayout from "@/components/AdminLayout";
 import { incrementPoolQuestionUsage } from "@/lib/poolQuestionUsage";
-import { deleteQuizSetQuestion, updateQuizSetTitle } from "@/lib/quizSets";
+import {
+  deleteQuizSetQuestion,
+  duplicateQuizSet,
+  updateQuizSetTitle,
+} from "@/lib/quizSets";
 
 type QuizSetValidationCategorySummary = {
   category: string;
@@ -243,69 +247,10 @@ async function handleDuplicateQuizSet(quizSetId: string, title: string) {
     return;
   }
 
-  const { data: sourceQuestions, error: sourceQuestionsError } =
-    await supabase
-      .from("questions")
-      .select("*")
-      .eq("quiz_set_id", quizSetId)
-      .order("question_number", { ascending: true });
+  const { error } = await duplicateQuizSet(quizSetId, cleanedTitle);
 
-  if (sourceQuestionsError) {
-    alert(
-      "Fragen konnten nicht geladen werden: " +
-        sourceQuestionsError.message
-    );
-    return;
-  }
-
-  if (!sourceQuestions || sourceQuestions.length === 0) {
-    alert("Dieses Quiz-Set enthält keine Fragen.");
-    return;
-  }
-
-  const { data: newQuizSet, error: newQuizSetError } = await supabase
-    .from("quiz_sets")
-    .insert({
-      title: cleanedTitle,
-    })
-    .select("id")
-    .single();
-
-  if (newQuizSetError) {
-    alert(
-      "Quiz-Set-Kopie konnte nicht erstellt werden: " +
-        newQuizSetError.message
-    );
-    return;
-  }
-
-  const questionsToInsert = sourceQuestions.map((question, index) => ({
-    quiz_set_id: newQuizSet.id,
-    room_code: "GENERATED",
-    source_pool_question_id: question.source_pool_question_id,
-    question_number: index + 1,
-    category: question.category,
-    points: question.points,
-    question: question.question,
-    solution: question.solution,
-    accepted_answers: question.accepted_answers || [],
-    host_notes: question.host_notes || "",
-    image_url: question.image_url || "",
-    audio_url: question.audio_url || "",
-    solution_image_url: question.solution_image_url || "",
-    solution_audio_url: question.solution_audio_url || "",
-    is_played: false,
-  }));
-
-  const { error: insertQuestionsError } = await supabase
-    .from("questions")
-    .insert(questionsToInsert);
-
-  if (insertQuestionsError) {
-    alert(
-      "Fragen konnten nicht in die Kopie eingefügt werden: " +
-        insertQuestionsError.message
-    );
+  if (error) {
+    alert("Quiz-Set konnte nicht dupliziert werden: " + error.message);
     return;
   }
 
