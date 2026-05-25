@@ -17,26 +17,50 @@ export default function AdminAuthGate({
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [error, setError] = useState("");
   const [isChecking, setIsChecking] = useState(false);
+  const [isRestoringSession, setIsRestoringSession] = useState(true);
 
   useEffect(() => {
-    const savedUnlock = sessionStorage.getItem(SESSION_KEY);
+    let isMounted = true;
 
-    if (savedUnlock === "true") {
-      fetch("/api/admin/session", {
-        cache: "no-store",
-      })
-        .then((response) => {
-          if (response.ok) {
-            setIsUnlocked(true);
-            return;
-          }
+    async function restoreSession() {
+      await Promise.resolve();
 
-          sessionStorage.removeItem(SESSION_KEY);
-        })
-        .catch(() => {
-          sessionStorage.removeItem(SESSION_KEY);
+      const savedUnlock = sessionStorage.getItem(SESSION_KEY);
+
+      if (savedUnlock !== "true") {
+        if (isMounted) {
+          setIsRestoringSession(false);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/admin/session", {
+          cache: "no-store",
         });
+
+        if (response.ok) {
+          if (isMounted) {
+            setIsUnlocked(true);
+          }
+          return;
+        }
+
+        sessionStorage.removeItem(SESSION_KEY);
+      } catch {
+        sessionStorage.removeItem(SESSION_KEY);
+      } finally {
+        if (isMounted) {
+          setIsRestoringSession(false);
+        }
+      }
     }
+
+    restoreSession();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -82,6 +106,10 @@ export default function AdminAuthGate({
 
   if (isUnlocked) {
     return <>{children}</>;
+  }
+
+  if (isRestoringSession) {
+    return null;
   }
 
   return (
