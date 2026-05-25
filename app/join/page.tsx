@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Suspense } from "react";
-import { useRouter } from "next/navigation";
 
 function JoinPageContent() {
   const [name, setName] = useState("");
@@ -15,9 +14,9 @@ function JoinPageContent() {
   const [players, setPlayers] = useState<any[]>([]);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
 
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   useEffect(() => {
     const room = searchParams.get("room");
@@ -48,8 +47,11 @@ function JoinPageContent() {
 
     if (!roomData) {
       setRoom(null);
+      setHasJoined(false);
+      setPlayers([]);
+      setLeaderboard([]);
       setIsBlocked(false);
-      router.push("/join");
+      setStatusMessage("Der Raum wurde beendet oder zurückgesetzt.");
       return;
     }
 
@@ -77,11 +79,13 @@ setIsBlocked((blockedBuzzes?.length || 0) > 0);
 
   async function joinRoom() {
     if (!name.trim()) {
+      setStatusMessage("");
       alert("Bitte Namen eingeben");
       return;
     }
 
     if (!roomCode.trim()) {
+      setStatusMessage("");
       alert("Bitte Raumcode eingeben");
       return;
     }
@@ -93,6 +97,7 @@ setIsBlocked((blockedBuzzes?.length || 0) > 0);
       .single();
 
     if (roomError || !roomData) {
+      setStatusMessage("");
       alert("Raum nicht gefunden");
       return;
     }
@@ -105,6 +110,7 @@ setIsBlocked((blockedBuzzes?.length || 0) > 0);
       .maybeSingle();
 
     if (existingPlayer) {
+      setStatusMessage("");
       alert("Name bereits vergeben");
       return;
     }
@@ -118,11 +124,13 @@ setIsBlocked((blockedBuzzes?.length || 0) > 0);
     ]);
 
     if (insertError) {
+      setStatusMessage("");
       alert("Name bereits vergeben");
       return;
     }
 
     setRoom(roomData);
+    setStatusMessage("");
     setHasJoined(true);
 
     await loadRoomData();
@@ -177,6 +185,12 @@ setIsBlocked((blockedBuzzes?.length || 0) > 0);
           <h1 className="text-4xl font-bold text-center">
             Baud_iful Quizz
           </h1>
+
+          {statusMessage && (
+            <div className="rounded-xl border border-cyan-400/40 bg-cyan-400/10 p-4 text-center text-sm text-cyan-100">
+              {statusMessage}
+            </div>
+          )}
 
           <div className="space-y-2">
             <label className="text-sm block">
