@@ -16,6 +16,7 @@ export default function AdminAuthGate({
   const [password, setPassword] = useState("");
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [error, setError] = useState("");
+  const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
     const savedUnlock = sessionStorage.getItem(SESSION_KEY);
@@ -25,19 +26,28 @@ export default function AdminAuthGate({
     }
   }, []);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const adminPassword =
-      process.env.NEXT_PUBLIC_ADMIN_PASSWORD ||
-      process.env.NEXT_PUBLIC_HOST_PASSWORD;
-
-    if (!adminPassword) {
-      setError("Kein Admin-Passwort konfiguriert.");
+    if (!password) {
+      setError("Bitte Admin-Passwort eingeben.");
       return;
     }
 
-    if (password === adminPassword) {
+    setIsChecking(true);
+    setError("");
+
+    const response = await fetch("/api/admin/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ password }),
+    });
+
+    setIsChecking(false);
+
+    if (response.ok) {
       sessionStorage.setItem(SESSION_KEY, "true");
       setIsUnlocked(true);
       setError("");
@@ -45,7 +55,8 @@ export default function AdminAuthGate({
       return;
     }
 
-    setError("Falsches Passwort.");
+    const result = await response.json().catch(() => null);
+    setError(result?.error || "Falsches Passwort.");
   }
 
   if (isUnlocked) {
@@ -68,6 +79,7 @@ export default function AdminAuthGate({
           <input
             type="password"
             value={password}
+            disabled={isChecking}
             onChange={(event) => {
               setPassword(event.target.value);
               setError("");
@@ -97,8 +109,8 @@ export default function AdminAuthGate({
             </p>
           )}
 
-          <AdminButton type="submit" variant="primary">
-            Entsperren
+          <AdminButton type="submit" variant="primary" disabled={isChecking}>
+            {isChecking ? "Prüfe..." : "Entsperren"}
           </AdminButton>
         </form>
       </AdminCard>
