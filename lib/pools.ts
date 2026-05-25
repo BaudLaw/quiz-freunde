@@ -77,13 +77,27 @@ export async function createPoolQuestion(input: Partial<PoolQuestion>) {
 export async function updatePoolQuestion(
   id: string,
   input: Partial<PoolQuestion>
-) {
-  return supabase
-    .from("pool_questions")
-    .update(input)
-    .eq("id", id)
-    .select()
-    .single();
+): Promise<ApiResponse<PoolQuestion>> {
+  const response = await fetch("/api/admin/pool-questions", {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ id, values: input }),
+  });
+
+  const result = (await response.json().catch(() => null)) as
+    | ApiResponse<PoolQuestion>
+    | null;
+
+  if (!result) {
+    return {
+      data: null,
+      error: { message: "Frage konnte nicht aktualisiert werden." },
+    };
+  }
+
+  return result;
 }
 
 export async function deletePoolQuestion(id: string) {
