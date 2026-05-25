@@ -4,13 +4,7 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 function getConfiguredPassword() {
-  return (
-    process.env.ADMIN_PASSWORD ||
-    process.env.HOST_PASSWORD ||
-    process.env.NEXT_PUBLIC_ADMIN_PASSWORD ||
-    process.env.NEXT_PUBLIC_HOST_PASSWORD ||
-    ""
-  );
+  return process.env.ADMIN_PASSWORD || "";
 }
 
 function passwordsMatch(input: string, expected: string) {
