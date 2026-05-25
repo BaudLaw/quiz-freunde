@@ -25,3 +25,25 @@ export async function updateQuizSetTitle(id: string, title: string) {
 
   return result;
 }
+
+export async function deleteQuizSetQuestion(id: string) {
+  const response = await fetch(
+    `/api/admin/quiz-set-questions?id=${encodeURIComponent(id)}`,
+    {
+      method: "DELETE",
+    }
+  );
+
+  const result = (await response.json().catch(() => null)) as
+    | QuizSetResponse<null>
+    | null;
+
+  if (!result) {
+    return {
+      data: null,
+      error: { message: "Frage konnte nicht geloescht werden." },
+    };
+  }
+
+  return result;
+}

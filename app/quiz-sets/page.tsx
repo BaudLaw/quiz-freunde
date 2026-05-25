@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import type { PoolQuestion } from "@/lib/poolTypes";
 import AdminLayout from "@/components/AdminLayout";
 import { incrementPoolQuestionUsage } from "@/lib/poolQuestionUsage";
-import { updateQuizSetTitle } from "@/lib/quizSets";
+import { deleteQuizSetQuestion, updateQuizSetTitle } from "@/lib/quizSets";
 
 type QuizSetValidationCategorySummary = {
   category: string;
@@ -636,10 +636,7 @@ async function handleDeleteQuizSetQuestion(questionId: string) {
     return;
   }
 
-  const { error } = await supabase
-    .from("questions")
-    .delete()
-    .eq("id", questionId);
+  const { error } = await deleteQuizSetQuestion(questionId);
 
   if (error) {
     alert("Frage konnte nicht gelöscht werden: " + error.message);
