@@ -22,7 +22,20 @@ export default function AdminAuthGate({
     const savedUnlock = sessionStorage.getItem(SESSION_KEY);
 
     if (savedUnlock === "true") {
-      setIsUnlocked(true);
+      fetch("/api/admin/session", {
+        cache: "no-store",
+      })
+        .then((response) => {
+          if (response.ok) {
+            setIsUnlocked(true);
+            return;
+          }
+
+          sessionStorage.removeItem(SESSION_KEY);
+        })
+        .catch(() => {
+          sessionStorage.removeItem(SESSION_KEY);
+        });
     }
   }, []);
 
@@ -37,17 +50,24 @@ export default function AdminAuthGate({
     setIsChecking(true);
     setError("");
 
-    const response = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ password }),
-    });
+    let response: Response;
 
-    setIsChecking(false);
+    try {
+      response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password }),
+      });
+    } catch {
+      setIsChecking(false);
+      setError("Login konnte nicht geprüft werden.");
+      return;
+    }
 
     if (response.ok) {
+      setIsChecking(false);
       sessionStorage.setItem(SESSION_KEY, "true");
       setIsUnlocked(true);
       setError("");
@@ -56,6 +76,7 @@ export default function AdminAuthGate({
     }
 
     const result = await response.json().catch(() => null);
+    setIsChecking(false);
     setError(result?.error || "Falsches Passwort.");
   }
 

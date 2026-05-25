@@ -1,11 +1,13 @@
 import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
+import {
+  ADMIN_SESSION_COOKIE,
+  ADMIN_SESSION_MAX_AGE_SECONDS,
+  createAdminSessionValue,
+  getAdminPassword,
+} from "@/lib/adminSession";
 
 export const runtime = "nodejs";
-
-function getConfiguredPassword() {
-  return process.env.ADMIN_PASSWORD || "";
-}
 
 function passwordsMatch(input: string, expected: string) {
   const inputBuffer = Buffer.from(input);
@@ -19,7 +21,7 @@ function passwordsMatch(input: string, expected: string) {
 }
 
 export async function POST(request: Request) {
-  const configuredPassword = getConfiguredPassword();
+  const configuredPassword = getAdminPassword();
 
   if (!configuredPassword) {
     return NextResponse.json(
@@ -54,5 +56,19 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ ok: true });
+  const response = NextResponse.json({ ok: true });
+
+  response.cookies.set(
+    ADMIN_SESSION_COOKIE,
+    createAdminSessionValue(configuredPassword),
+    {
+      httpOnly: true,
+      maxAge: ADMIN_SESSION_MAX_AGE_SECONDS,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    }
+  );
+
+  return response;
 }
