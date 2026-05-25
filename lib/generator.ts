@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import type { PoolQuestion } from "./poolTypes";
 import { pointsFromDifficulty } from "./poolTypes";
+import { incrementPoolQuestionUsage } from "./poolQuestionUsage";
 
 export type GenerateQuizInput = {
   poolQuestionIds: string[];
@@ -152,18 +153,8 @@ export async function generateQuizFromPoolQuestions(input: GenerateQuizInput) {
     );
   }
 
-  const now = new Date().toISOString();
-
-  await Promise.all(
-    orderedPoolQuestions.map((poolQuestion) =>
-      supabase
-        .from("pool_questions")
-        .update({
-          usage_count: (poolQuestion.usage_count ?? 0) + 1,
-          last_used_at: now,
-        })
-        .eq("id", poolQuestion.id)
-    )
+  await incrementPoolQuestionUsage(
+    orderedPoolQuestions.map((poolQuestion) => poolQuestion.id)
   );
 
   return {

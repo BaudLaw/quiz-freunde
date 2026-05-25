@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { PoolQuestion } from "@/lib/poolTypes";
 import AdminLayout from "@/components/AdminLayout";
+import { incrementPoolQuestionUsage } from "@/lib/poolQuestionUsage";
 
 type QuizSetValidationCategorySummary = {
   category: string;
@@ -410,22 +411,7 @@ async function handleReplaceQuizSetQuestionWithCandidate(
     return;
   }
 
-  const { data: currentPoolQuestion, error: loadPoolQuestionError } =
-    await supabase
-      .from("pool_questions")
-      .select("usage_count")
-      .eq("id", replacementQuestion.id)
-      .single();
-
-  if (!loadPoolQuestionError) {
-    await supabase
-      .from("pool_questions")
-      .update({
-        usage_count: (currentPoolQuestion?.usage_count || 0) + 1,
-        last_used_at: new Date().toISOString(),
-      })
-      .eq("id", replacementQuestion.id);
-  }
+  await incrementPoolQuestionUsage([replacementQuestion.id]);
 
   if (expandedQuizSetId) {
     const { data, error: reloadError } = await supabase
@@ -591,7 +577,7 @@ async function handleFillMissingQuizSetQuestions(quizSetId: string) {
       continue;
     }
 
-    const { data: currentPoolQuestion, error: loadPoolQuestionError } =
+    const { error: loadPoolQuestionError } =
       await supabase
         .from("pool_questions")
         .select("usage_count")
@@ -606,15 +592,8 @@ async function handleFillMissingQuizSetQuestions(quizSetId: string) {
       continue;
     }
 
-    const currentUsageCount = currentPoolQuestion?.usage_count || 0;
-
-    const { error: updatePoolQuestionError } = await supabase
-      .from("pool_questions")
-      .update({
-        usage_count: currentUsageCount + 1,
-        last_used_at: new Date().toISOString(),
-      })
-      .eq("id", sourceId);
+    const { error: updatePoolQuestionError } =
+      await incrementPoolQuestionUsage([sourceId]);
 
     if (updatePoolQuestionError) {
       console.error(
