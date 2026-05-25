@@ -93,3 +93,25 @@ export async function insertQuizSetQuestions(questions: unknown[]) {
 
   return result;
 }
+
+export async function deleteQuizSet(id: string) {
+  const response = await fetch(
+    `/api/admin/quiz-sets?id=${encodeURIComponent(id)}`,
+    {
+      method: "DELETE",
+    }
+  );
+
+  const result = (await response.json().catch(() => null)) as
+    | QuizSetResponse<{ id: string; title: string }>
+    | null;
+
+  if (!result) {
+    return {
+      data: null,
+      error: { message: "Quiz-Set konnte nicht geloescht werden." },
+    };
+  }
+
+  return result;
+}

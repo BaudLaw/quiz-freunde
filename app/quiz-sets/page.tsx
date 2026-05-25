@@ -6,6 +6,7 @@ import type { PoolQuestion } from "@/lib/poolTypes";
 import AdminLayout from "@/components/AdminLayout";
 import { incrementPoolQuestionUsage } from "@/lib/poolQuestionUsage";
 import {
+  deleteQuizSet,
   deleteQuizSetQuestion,
   duplicateQuizSet,
   insertQuizSetQuestions,
@@ -625,32 +626,15 @@ async function handleDeleteQuizSet(quizSetId: string, title: string) {
     return;
   }
 
-  const { error: questionsError } = await supabase
-    .from("questions")
-    .delete()
-    .eq("quiz_set_id", quizSetId);
+  const { data: deletedQuizSet, error } = await deleteQuizSet(quizSetId);
 
-  if (questionsError) {
-    alert("Fragen konnten nicht gelöscht werden: " + questionsError.message);
-    return;
-  }
-
-  const { data: deletedQuizSet, error: quizSetError } = await supabase
-    .from("quiz_sets")
-    .delete()
-    .eq("id", quizSetId)
-    .select("id, title")
-    .maybeSingle();
-
-  if (quizSetError) {
-    alert("Quiz-Set konnte nicht gelöscht werden: " + quizSetError.message);
+  if (error) {
+    alert("Quiz-Set konnte nicht gelöscht werden: " + error.message);
     return;
   }
 
   if (!deletedQuizSet) {
-    alert(
-      "Quiz-Set wurde nicht gelöscht. Die ID wurde nicht gefunden oder Delete ist durch RLS blockiert."
-    );
+    alert("Quiz-Set wurde nicht gelöscht.");
     return;
   }
 
@@ -664,8 +648,7 @@ async function handleDeleteQuizSet(quizSetId: string, title: string) {
 
   alert("Quiz-Set wurde gelöscht.");
 }
-
-    async function handleToggleQuizSetQuestions(quizSetId: string) {
+async function handleToggleQuizSetQuestions(quizSetId: string) {
     setReplacementSelection(null);
 
     if (expandedQuizSetId === quizSetId) {

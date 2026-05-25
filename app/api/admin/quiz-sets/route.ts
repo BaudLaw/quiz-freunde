@@ -157,3 +157,64 @@ export async function PATCH(request: Request) {
 
   return NextResponse.json({ data, error: null });
 }
+
+export async function DELETE(request: Request) {
+  if (!(await isAdminRequest())) {
+    return NextResponse.json(
+      { data: null, error: { message: "Nicht autorisiert." } },
+      { status: 401 }
+    );
+  }
+
+  const url = new URL(request.url);
+  const id = url.searchParams.get("id") || "";
+
+  if (!id) {
+    return NextResponse.json(
+      { data: null, error: { message: "Pflichtfelder fehlen." } },
+      { status: 400 }
+    );
+  }
+
+  const { error: questionsError } = await supabase
+    .from("questions")
+    .delete()
+    .eq("quiz_set_id", id)
+    .eq("room_code", "GENERATED");
+
+  if (questionsError) {
+    return NextResponse.json(
+      { data: null, error: { message: questionsError.message } },
+      { status: 500 }
+    );
+  }
+
+  const { data: deletedQuizSet, error: quizSetError } = await supabase
+    .from("quiz_sets")
+    .delete()
+    .eq("id", id)
+    .select("id, title")
+    .maybeSingle();
+
+  if (quizSetError) {
+    return NextResponse.json(
+      { data: null, error: { message: quizSetError.message } },
+      { status: 500 }
+    );
+  }
+
+  if (!deletedQuizSet) {
+    return NextResponse.json(
+      {
+        data: null,
+        error: {
+          message:
+            "Quiz-Set wurde nicht geloescht. Die ID wurde nicht gefunden oder Delete ist blockiert.",
+        },
+      },
+      { status: 404 }
+    );
+  }
+
+  return NextResponse.json({ data: deletedQuizSet, error: null });
+}
