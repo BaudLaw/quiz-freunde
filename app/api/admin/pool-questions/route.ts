@@ -172,3 +172,36 @@ export async function PATCH(request: Request) {
 
   return NextResponse.json({ data, error: null });
 }
+
+export async function DELETE(request: Request) {
+  if (!(await isAdminRequest())) {
+    return NextResponse.json(
+      { data: null, error: { message: "Nicht autorisiert." } },
+      { status: 401 }
+    );
+  }
+
+  const url = new URL(request.url);
+  const id = optionalString(url.searchParams.get("id"));
+
+  if (!id) {
+    return NextResponse.json(
+      { data: null, error: { message: "Pflichtfelder fehlen." } },
+      { status: 400 }
+    );
+  }
+
+  const { error } = await supabase
+    .from("pool_questions")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    return NextResponse.json(
+      { data: null, error: { message: error.message } },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({ data: null, error: null });
+}

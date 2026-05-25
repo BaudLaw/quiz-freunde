@@ -101,8 +101,23 @@ export async function updatePoolQuestion(
 }
 
 export async function deletePoolQuestion(id: string) {
-  return supabase
-    .from("pool_questions")
-    .delete()
-    .eq("id", id);
+  const response = await fetch(
+    `/api/admin/pool-questions?id=${encodeURIComponent(id)}`,
+    {
+      method: "DELETE",
+    }
+  );
+
+  const result = (await response.json().catch(() => null)) as
+    | ApiResponse<null>
+    | null;
+
+  if (!result) {
+    return {
+      data: null,
+      error: { message: "Frage konnte nicht geloescht werden." },
+    };
+  }
+
+  return result;
 }
