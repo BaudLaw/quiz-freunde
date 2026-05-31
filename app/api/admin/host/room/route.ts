@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/adminRequest";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabaseServer";
 
 export const runtime = "nodejs";
 

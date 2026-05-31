@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/adminRequest";
 import type { PoolQuestion } from "@/lib/poolTypes";
 import { pointsFromDifficulty } from "@/lib/poolTypes";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabaseServer";
 
 export const runtime = "nodejs";
 
