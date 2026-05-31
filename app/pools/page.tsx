@@ -9,6 +9,7 @@ import {
   createPoolQuestion,
   updatePoolQuestion,
 } from "@/lib/pools";
+import { uploadPoolMedia } from "@/lib/adminStorage";
 import type { PoolQuestion, QuestionPool } from "@/lib/poolTypes";
 import { generateQuizFromPoolQuestions } from "@/lib/generator";
 import AdminButton from "@/components/AdminButton";
@@ -646,16 +647,7 @@ function parseBoolean(value: string): boolean {
   async function uploadPoolImage(file: File): Promise<string | null> {
   setUploadingImage(true);
 
-  const fileExt = file.name.split(".").pop();
-  const fileName = `${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2)}.${fileExt}`;
-
-  const filePath = `pool-images/${fileName}`;
-
-  const { error } = await supabase.storage
-    .from("quiz-media")
-    .upload(filePath, file);
+  const { data, error } = await uploadPoolMedia(file, "pool-image");
 
   setUploadingImage(false);
 
@@ -665,25 +657,13 @@ function parseBoolean(value: string): boolean {
     return null;
   }
 
-  const { data } = supabase.storage.from("quiz-media").getPublicUrl(filePath);
-
-  return data.publicUrl;
+  return data?.publicUrl || null;
 }
 
   async function uploadPoolAudio(file: File): Promise<string | null> {
     setUploadingAudio(true);
 
-    const fileExt = file.name.split(".").pop();
-
-    const fileName = `${Date.now()}-${Math.random()
-      .toString(36)
-      .slice(2)}.${fileExt}`;
-
-    const filePath = `pool-audio/${fileName}`;
-
-    const { error } = await supabase.storage
-      .from("quiz-media")
-      .upload(filePath, file);
+    const { data, error } = await uploadPoolMedia(file, "pool-audio");
 
     setUploadingAudio(false);
 
@@ -693,26 +673,13 @@ function parseBoolean(value: string): boolean {
       return null;
     }
 
-    const { data } = supabase.storage
-      .from("quiz-media")
-      .getPublicUrl(filePath);
-
-    return data.publicUrl;
+    return data?.publicUrl || null;
   }
 
   async function uploadSolutionImage(file: File): Promise<string | null> {
   setUploadingSolutionImage(true);
 
-  const fileExt = file.name.split(".").pop();
-  const fileName = `${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2)}.${fileExt}`;
-
-  const filePath = `pool-solution-images/${fileName}`;
-
-  const { error } = await supabase.storage
-    .from("quiz-media")
-    .upload(filePath, file);
+  const { data, error } = await uploadPoolMedia(file, "pool-solution-image");
 
   setUploadingSolutionImage(false);
 
@@ -722,26 +689,13 @@ function parseBoolean(value: string): boolean {
     return null;
   }
 
-  const { data } = supabase.storage
-    .from("quiz-media")
-    .getPublicUrl(filePath);
-
-  return data.publicUrl;
+  return data?.publicUrl || null;
 }
 
   async function uploadSolutionAudio(file: File): Promise<string | null> {
   setUploadingSolutionAudio(true);
 
-  const fileExt = file.name.split(".").pop();
-  const fileName = `${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2)}.${fileExt}`;
-
-  const filePath = `pool-solution-audio/${fileName}`;
-
-  const { error } = await supabase.storage
-    .from("quiz-media")
-    .upload(filePath, file);
+  const { data, error } = await uploadPoolMedia(file, "pool-solution-audio");
 
   setUploadingSolutionAudio(false);
 
@@ -751,11 +705,7 @@ function parseBoolean(value: string): boolean {
     return null;
   }
 
-  const { data } = supabase.storage
-    .from("quiz-media")
-    .getPublicUrl(filePath);
-
-  return data.publicUrl;
+  return data?.publicUrl || null;
 }
 
   function startEditQuestion(question: PoolQuestion) {
