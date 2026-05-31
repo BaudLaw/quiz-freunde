@@ -179,8 +179,7 @@ export async function DELETE(request: Request) {
   const { error: questionsError } = await supabase
     .from("questions")
     .delete()
-    .eq("quiz_set_id", id)
-    .eq("room_code", "GENERATED");
+    .eq("quiz_set_id", id);
 
   if (questionsError) {
     return NextResponse.json(

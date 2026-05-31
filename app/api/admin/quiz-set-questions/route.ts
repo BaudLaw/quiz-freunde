@@ -173,7 +173,7 @@ export async function DELETE(request: Request) {
     .from("questions")
     .delete()
     .eq("id", id)
-    .eq("room_code", "GENERATED");
+    .not("quiz_set_id", "is", null);
 
   if (error) {
     return NextResponse.json(
