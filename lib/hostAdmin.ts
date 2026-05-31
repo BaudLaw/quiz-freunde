@@ -233,3 +233,29 @@ export async function deleteHostEditorQuestion(
 
   return result;
 }
+
+export async function importHostQuizSet(title: string, questions: unknown[]) {
+  const response = await fetch("/api/admin/host/import", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ title, questions }),
+  });
+
+  const result = (await response.json().catch(() => null)) as
+    | HostAdminResponse<{
+        quizSet: { id: string; title: string };
+        insertedCount: number;
+      }>
+    | null;
+
+  if (!result) {
+    return {
+      data: null,
+      error: { message: "Quiz konnte nicht importiert werden." },
+    };
+  }
+
+  return result;
+}

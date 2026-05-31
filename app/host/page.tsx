@@ -10,6 +10,7 @@ import {
   clearHostedFeedback,
   deleteHostEditorQuestion,
   finishHostedRoom,
+  importHostQuizSet,
   markHostedCorrect,
   markHostedWrong,
   openHostedBoard,
@@ -342,28 +343,6 @@ setBuzzes(buzzData || []);
 
     const rows = parseCSV(text);
 
-    const zipQuizSetResponse = await supabase
-  .from("quiz_sets")
-  .insert([
-    {
-      title: quizTitle,
-    },
-  ])
-  .select()
-  .single();
-
-if (zipQuizSetResponse.error) {
-  alert(zipQuizSetResponse.error.message);
-  return;
-}
-
-if (!zipQuizSetResponse.data) {
-  alert("Quizset konnte nicht erstellt werden");
-  return;
-}
-
-const zipQuizSetId = zipQuizSetResponse.data.id;
-
     let uploadedImageUrl = "";
     let uploadedAudioUrl = "";
 
@@ -385,7 +364,7 @@ const zipQuizSetId = zipQuizSetResponse.data.id;
     
     const questions = rows.map(
   (row: any, index: number) => ({
-    quiz_set_id: zipQuizSetId,
+    quiz_set_id: "",
     room_code: "",
     question_number: index + 1,
 
@@ -436,13 +415,10 @@ const zipQuizSetId = zipQuizSetResponse.data.id;
       return;
       }
 
-    const { error: insertError } =
-      await supabase
-        .from("questions")
-        .insert(questions);
+    const { error } = await importHostQuizSet(quizTitle, questions);
 
-    if (insertError) {
-      alert(insertError.message);
+    if (error) {
+      alert(error.message);
       return;
     }
 
@@ -588,31 +564,9 @@ async function processZipImport() {
 
   const rows = parseCSV(csvText);
 
-  const quizSetResponse = await supabase
-    .from("quiz_sets")
-    .insert([
-      {
-        title: quizTitle,
-      },
-    ])
-    .select()
-    .single();
-
-  if (quizSetResponse.error) {
-    alert(quizSetResponse.error.message);
-    return;
-  }
-
-  if (!quizSetResponse.data) {
-    alert("Quizset konnte nicht erstellt werden");
-    return;
-  }
-
-  const quizSetId = quizSetResponse.data.id;
-
   const questions = rows.map(
     (row: any, index: number) => ({
-      quiz_set_id: quizSetId,
+      quiz_set_id: "",
       room_code: "",
       question_number: index + 1,
 
@@ -661,12 +615,10 @@ async function processZipImport() {
     return;
   }
 
-  const { error: insertError } = await supabase
-    .from("questions")
-    .insert(questions);
+  const { error } = await importHostQuizSet(quizTitle, questions);
 
-  if (insertError) {
-    alert(insertError.message);
+  if (error) {
+    alert(error.message);
     return;
   }
 
