@@ -104,6 +104,13 @@ export async function finishHostedRoom(roomCode: string) {
   });
 }
 
+export async function startHostedTimer(roomCode: string) {
+  return runHostRoomAction({
+    action: "start-timer",
+    roomCode,
+  });
+}
+
 export async function startHostedQuiz(quizSetId: string) {
   const response = await fetch("/api/admin/host/start", {
     method: "POST",

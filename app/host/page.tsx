@@ -17,6 +17,7 @@ import {
   setHostedTurnPlayer,
   showHostedSolution,
   startHostedQuiz,
+  startHostedTimer,
 } from "@/lib/hostAdmin";
 
 function generateCode() {
@@ -967,13 +968,12 @@ return (
 
               <button
                 onClick={async () => {
-                await supabase
-                .from("rooms")
-                .update({
-                timer_end:
-                Date.now() + 30000,
-                })
-                .eq("code", roomCode);
+                const { error } = await startHostedTimer(roomCode);
+
+                if (error) {
+                  alert("Timer konnte nicht gestartet werden: " + error.message);
+                  return;
+                }
 
                 await loadRoomData();
                 }}

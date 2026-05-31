@@ -175,5 +175,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ data: { room: data }, error: null });
   }
 
+  if (action === "start-timer") {
+    const { data, error } = await updateRoom(roomCode, {
+      timer_end: Date.now() + 30000,
+    });
+
+    if (error) {
+      return jsonError(error.message, 500);
+    }
+
+    return NextResponse.json({ data: { room: data }, error: null });
+  }
+
   return jsonError("Aktion ist ungueltig.", 400);
 }
