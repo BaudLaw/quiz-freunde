@@ -5,6 +5,7 @@ import QRCode from "react-qr-code";
 import { supabase } from "@/lib/supabase";
 import JSZip from "jszip";
 import AdminLayout from "@/components/AdminLayout";
+import { resetHostedRoom } from "@/lib/hostAdmin";
 
 function generateCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -1031,25 +1032,12 @@ async function resetGame() {
 
   const codeToReset = roomCode;
 
-  await supabase
-    .from("buzzes")
-    .delete()
-    .eq("room_code", codeToReset);
+  const { error } = await resetHostedRoom(codeToReset);
 
-  await supabase
-    .from("players")
-    .delete()
-    .eq("room_code", codeToReset);
-
-  await supabase
-    .from("questions")
-    .delete()
-    .eq("room_code", codeToReset);
-
-  await supabase
-    .from("rooms")
-    .delete()
-    .eq("code", codeToReset);
+  if (error) {
+    alert("Spiel konnte nicht zurÃ¼ckgesetzt werden: " + error.message);
+    return;
+  }
 
   setRoomCode("");
   setRoom(null);
