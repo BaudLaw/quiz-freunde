@@ -5,6 +5,7 @@ import QRCode from "react-qr-code";
 import { supabase } from "@/lib/supabase";
 import JSZip from "jszip";
 import AdminLayout from "@/components/AdminLayout";
+import { uploadAdminMedia } from "@/lib/adminStorage";
 import {
   assignHostedBuzzAnswer,
   clearHostedFeedback,
@@ -666,32 +667,9 @@ async function uploadFile(
   file: File,
   folder: string
 ) {
-  const originalName =
-    file.name
-      .split("/")
-      .pop()
-      ?.split("\\")
-      .pop() || "file";
-
-  const safeName =
-    originalName
-      .replace(/[^a-zA-Z0-9._-]/g, "_")
-      .toLowerCase();
-
-  const storagePath =
-    `${folder}/${Date.now()}-${safeName}`;
-
-  const { error } = await supabase
-    .storage
-    .from("quiz-media")
-    .upload(
-      storagePath,
-      file,
-      {
-        contentType:
-          file.type || "application/octet-stream",
-      }
-    );
+  const uploadType =
+    folder === "audio" ? "host-audio" : "host-image";
+  const { data, error } = await uploadAdminMedia(file, uploadType);
 
   if (error) {
     console.log(error);
@@ -702,14 +680,7 @@ async function uploadFile(
     return null;
   }
 
-  const {
-    data: { publicUrl },
-  } = supabase
-    .storage
-    .from("quiz-media")
-    .getPublicUrl(storagePath);
-
-  return publicUrl;
+  return data?.publicUrl || null;
 }
 
 async function resetGame() {

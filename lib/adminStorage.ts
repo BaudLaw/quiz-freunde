@@ -7,9 +7,11 @@ export type PoolMediaUploadType =
   | "pool-image"
   | "pool-audio"
   | "pool-solution-image"
-  | "pool-solution-audio";
+  | "pool-solution-audio"
+  | "host-image"
+  | "host-audio";
 
-export async function uploadPoolMedia(
+export async function uploadAdminMedia(
   file: File,
   type: PoolMediaUploadType
 ) {
@@ -34,4 +36,11 @@ export async function uploadPoolMedia(
   }
 
   return result;
+}
+
+export async function uploadPoolMedia(
+  file: File,
+  type: PoolMediaUploadType
+) {
+  return uploadAdminMedia(file, type);
 }

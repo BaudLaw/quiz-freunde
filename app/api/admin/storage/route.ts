@@ -10,6 +10,8 @@ const uploadFolders = {
   "pool-audio": "pool-audio",
   "pool-solution-image": "pool-solution-images",
   "pool-solution-audio": "pool-solution-audio",
+  "host-image": "images",
+  "host-audio": "audio",
 } as const;
 
 function getFileExtension(fileName: string) {
