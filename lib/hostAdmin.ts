@@ -8,6 +8,7 @@ type HostRoomActionInput = {
   roomCode: string;
   gameState?: string;
   playerName?: string;
+  questionId?: string;
 };
 
 type DeleteHostEditorQuestionInput = {
@@ -82,6 +83,17 @@ export async function openHostedBoard(roomCode: string) {
   return runHostRoomAction({
     action: "open-board",
     roomCode,
+  });
+}
+
+export async function selectHostedQuestion(
+  roomCode: string,
+  questionId: string
+) {
+  return runHostRoomAction({
+    action: "select-question",
+    roomCode,
+    questionId,
   });
 }
 

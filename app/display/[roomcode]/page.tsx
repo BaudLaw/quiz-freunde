@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { supabase } from "@/lib/supabase";
+import { selectHostedQuestion } from "@/lib/hostAdmin";
 import QRCode from "react-qr-code";
 
 
@@ -559,29 +560,14 @@ useEffect(() => {
           });
 
               setTimeout(async () => {
-              await supabase
-                .from("buzzes")
-                .delete()
-                .eq("room_code", roomCode)
-                .eq("question_number", q.question_number);
+              const { error } = await selectHostedQuestion(roomCode, q.id);
 
-              await supabase
-                .from("rooms")
-                .update({
-                  current_question: q.question_number,
-                  game_state: "question",
-                  active_player: room.turn_player || "",
-                  buzz_locked: true,
-                  feedback: "",
-                })
-                .eq("code", roomCode);
+              if (error) {
+                alert(error.message);
+                setZoomCard(null);
+                return;
+              }
 
-              await supabase
-                .from("questions")
-                .update({
-                  is_played: true,
-                })
-                .eq("id", q.id);
               setTimeout(() => {
                 setZoomCard(null);
               },1000);

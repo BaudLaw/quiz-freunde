@@ -9,6 +9,7 @@ type HostRoomActionInput = {
   roomCode?: unknown;
   gameState?: unknown;
   playerName?: unknown;
+  questionId?: unknown;
 };
 
 const allowedGameStates = new Set([
@@ -127,6 +128,88 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ data: { room: data }, error: null });
+  }
+
+  if (action === "select-question") {
+    const questionId =
+      typeof input.questionId === "string" ? input.questionId.trim() : "";
+
+    if (!questionId) {
+      return jsonError("Frage fehlt.", 400);
+    }
+
+    const { data: roomData, error: roomError } = await supabase
+      .from("rooms")
+      .select("*")
+      .eq("code", roomCode)
+      .maybeSingle();
+
+    if (roomError) {
+      return jsonError(roomError.message, 500);
+    }
+
+    if (!roomData) {
+      return jsonError("Raum wurde nicht gefunden.", 404);
+    }
+
+    const { data: questionData, error: questionError } = await supabase
+      .from("questions")
+      .select("id, question_number, is_played")
+      .eq("id", questionId)
+      .eq("room_code", roomCode)
+      .maybeSingle();
+
+    if (questionError) {
+      return jsonError(questionError.message, 500);
+    }
+
+    if (!questionData) {
+      return jsonError("Frage wurde nicht gefunden.", 404);
+    }
+
+    if (questionData.is_played) {
+      return jsonError("Diese Frage wurde bereits gespielt.", 400);
+    }
+
+    const { error: deleteBuzzError } = await supabase
+      .from("buzzes")
+      .delete()
+      .eq("room_code", roomCode)
+      .eq("question_number", questionData.question_number);
+
+    if (deleteBuzzError) {
+      return jsonError(deleteBuzzError.message, 500);
+    }
+
+    const { data: updatedRoom, error: updateRoomError } = await updateRoom(
+      roomCode,
+      {
+        current_question: questionData.question_number,
+        game_state: "question",
+        active_player: roomData.turn_player || "",
+        buzz_locked: true,
+        feedback: "",
+      }
+    );
+
+    if (updateRoomError) {
+      return jsonError(updateRoomError.message, 500);
+    }
+
+    const { error: updateQuestionError } = await supabase
+      .from("questions")
+      .update({ is_played: true })
+      .eq("id", questionId)
+      .eq("room_code", roomCode);
+
+    if (updateQuestionError) {
+      return jsonError(updateQuestionError.message, 500);
+    }
+
+    return NextResponse.json({
+      data: { room: updatedRoom, questionId },
+      error: null,
+    });
   }
 
   if (action === "assign-buzz-answer") {
