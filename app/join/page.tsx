@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { joinGameRoom, sendGameBuzz } from "@/lib/gameActions";
 import { Suspense } from "react";
 
 function JoinPageContent() {
@@ -90,46 +91,15 @@ setIsBlocked((blockedBuzzes?.length || 0) > 0);
       return;
     }
 
-    const { data: roomData, error: roomError } = await supabase
-      .from("rooms")
-      .select("*")
-      .eq("code", roomCode)
-      .single();
+    const { data, error } = await joinGameRoom(roomCode, name);
 
-    if (roomError || !roomData) {
+    if (error) {
       setStatusMessage("");
-      alert("Raum nicht gefunden");
+      alert(error.message);
       return;
     }
 
-    const { data: existingPlayer } = await supabase
-      .from("players")
-      .select("*")
-      .eq("room_code", roomCode)
-      .eq("player_name", name)
-      .maybeSingle();
-
-    if (existingPlayer) {
-      setStatusMessage("");
-      alert("Name bereits vergeben");
-      return;
-    }
-
-    const { error: insertError } = await supabase.from("players").insert([
-      {
-        room_code: roomCode,
-        player_name: name,
-        score: 0,
-      },
-    ]);
-
-    if (insertError) {
-      setStatusMessage("");
-      alert("Name bereits vergeben");
-      return;
-    }
-
-    setRoom(roomData);
+    setRoom(data?.room || null);
     setStatusMessage("");
     setHasJoined(true);
 
@@ -148,32 +118,11 @@ setIsBlocked((blockedBuzzes?.length || 0) > 0);
     return;
   }
 
-  const { data: existingBuzz } = await supabase
-    .from("buzzes")
-    .select("*")
-    .eq("room_code", roomCode)
-    .eq(
-      "question_number",
-      room.current_question
-    )
-    .eq("player_name", name)
-    .maybeSingle();
+  const { error } = await sendGameBuzz(roomCode, name);
 
-  if (existingBuzz) {
-    return;
+  if (error) {
+    alert(error.message);
   }
-
-  await supabase
-  .from("buzzes")
-  .insert([
-    {
-      room_code: roomCode,
-      question_number:
-        room.current_question,
-      player_name: name,
-      is_blocked: false,
-    },
-  ]);
 }
 
     return (
