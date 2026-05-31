@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import {
   getQuestionPools,
   getPoolQuestions,
@@ -12,6 +11,7 @@ import {
 import { uploadPoolMedia } from "@/lib/adminStorage";
 import type { PoolQuestion, QuestionPool } from "@/lib/poolTypes";
 import { generateQuizFromPoolQuestions } from "@/lib/generator";
+import { getQuizSets } from "@/lib/quizSets";
 import AdminButton from "@/components/AdminButton";
 import AdminCard from "@/components/AdminCard";
 import AdminLayout from "@/components/AdminLayout";
@@ -86,19 +86,14 @@ const availableBoardCategories = Array.from(
 ).sort();
 
 async function loadQuizSetOptions() {
-  const { data, error } = await supabase
-    .from("quiz_sets")
-    .select("id,title")
-    .order("created_at", {
-      ascending: false,
-    });
+  const { data, error } = await getQuizSets("options");
 
   if (error) {
     console.error("Quiz-Sets konnten nicht geladen werden:", error);
     return;
   }
 
-  setQuizSetOptions(data || []);
+  setQuizSetOptions((data || []) as QuizSetOption[]);
 }
 
   useEffect(() => {
@@ -420,16 +415,7 @@ const result = await generateQuizFromPoolQuestions({
 
 setGeneratedQuizSetId(result.quizSetId);
 
-const { data, error } = await supabase
-  .from("quiz_sets")
-  .select("id,title")
-  .order("created_at", {
-    ascending: false,
-  });
-
-if (!error) {
-  setQuizSetOptions(data || []);
-}
+await loadQuizSetOptions();
 
 const actionText =
   targetQuizSetId && generatorMode === "replace"

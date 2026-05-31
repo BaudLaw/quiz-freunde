@@ -14,6 +14,133 @@ type DuplicateQuizSetInput = {
   title?: unknown;
 };
 
+type ValidationQuestion = {
+  category: string | null;
+  points: number | null;
+};
+
+function validateQuizSetForBoard(questions: ValidationQuestion[]) {
+  const warnings: string[] = [];
+  const requiredPoints = [100, 200, 300, 400, 500];
+
+  if (questions.length === 0) {
+    return {
+      isBoardValid: false,
+      warnings: ["Dieses Quiz-Set enthaelt keine Fragen."],
+    };
+  }
+
+  const categories = Array.from(
+    new Set(questions.map((question) => question.category).filter(Boolean))
+  );
+
+  if (categories.length > 6) {
+    warnings.push(
+      `Zu viele Kategorien: ${categories.length} vorhanden, maximal 6 erlaubt.`
+    );
+  }
+
+  for (const category of categories) {
+    const categoryQuestions = questions.filter(
+      (question) => question.category === category
+    );
+
+    if (categoryQuestions.length !== 5) {
+      warnings.push(
+        `Kategorie "${category}" enthaelt ${categoryQuestions.length} Fragen statt 5.`
+      );
+    }
+
+    const pointsInCategory = categoryQuestions.map((question) =>
+      Number(question.points)
+    );
+
+    for (const requiredPoint of requiredPoints) {
+      if (!pointsInCategory.includes(requiredPoint)) {
+        warnings.push(`Kategorie "${category}" fehlt ${requiredPoint} Punkte.`);
+      }
+    }
+
+    const duplicatePoints = pointsInCategory.filter(
+      (point, index) => pointsInCategory.indexOf(point) !== index
+    );
+
+    for (const duplicatePoint of Array.from(new Set(duplicatePoints))) {
+      warnings.push(
+        `Kategorie "${category}" enthaelt ${duplicatePoint} Punkte mehrfach.`
+      );
+    }
+  }
+
+  return {
+    isBoardValid: warnings.length === 0,
+    warnings,
+  };
+}
+
+export async function GET(request: Request) {
+  if (!(await isAdminRequest())) {
+    return NextResponse.json(
+      { data: null, error: { message: "Nicht autorisiert." } },
+      { status: 401 }
+    );
+  }
+
+  const url = new URL(request.url);
+  const mode = url.searchParams.get("mode") || "list";
+
+  const { data: quizSetsData, error: quizSetsError } = await supabase
+    .from("quiz_sets")
+    .select("id, title, created_at")
+    .order("created_at", { ascending: false });
+
+  if (quizSetsError) {
+    return NextResponse.json(
+      { data: null, error: { message: quizSetsError.message } },
+      { status: 500 }
+    );
+  }
+
+  if (mode === "options") {
+    return NextResponse.json({
+      data: (quizSetsData || []).map((quizSet) => ({
+        id: quizSet.id,
+        title: quizSet.title,
+      })),
+      error: null,
+    });
+  }
+
+  const { data: questionsData, error: questionsError } = await supabase
+    .from("questions")
+    .select("quiz_set_id, category, points")
+    .not("quiz_set_id", "is", null);
+
+  if (questionsError) {
+    return NextResponse.json(
+      { data: null, error: { message: questionsError.message } },
+      { status: 500 }
+    );
+  }
+
+  const questions = questionsData || [];
+  const quizSetsWithValidation = (quizSetsData || []).map((quizSet) => {
+    const validationQuestions = questions.filter(
+      (question) => question.quiz_set_id === quizSet.id
+    );
+
+    return {
+      id: quizSet.id,
+      title: quizSet.title,
+      created_at: quizSet.created_at,
+      question_count: validationQuestions.length,
+      validation: validateQuizSetForBoard(validationQuestions),
+    };
+  });
+
+  return NextResponse.json({ data: quizSetsWithValidation, error: null });
+}
+
 export async function POST(request: Request) {
   if (!(await isAdminRequest())) {
     return NextResponse.json(

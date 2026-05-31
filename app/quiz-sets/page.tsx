@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import type { PoolQuestion } from "@/lib/poolTypes";
+import { getPoolQuestionCandidates } from "@/lib/pools";
 import AdminLayout from "@/components/AdminLayout";
 import { incrementPoolQuestionUsage } from "@/lib/poolQuestionUsage";
 import {
   deleteQuizSet,
   deleteQuizSetQuestion,
   duplicateQuizSet,
+  getQuizSetQuestions,
+  getQuizSets,
   insertQuizSetQuestions,
   updateQuizSetQuestion,
   updateQuizSetTitle,
@@ -155,48 +157,31 @@ export default function QuizSetsPage() {
     useState<string | null>(null);
 
   async function loadQuizSetsWithCount() {
-    const { data: quizSetsData, error: quizSetsError } = await supabase
-      .from("quiz_sets")
-      .select("id, title, created_at")
-      .order("created_at", { ascending: false });
+    const { data, error } = await getQuizSets("list");
 
-    if (quizSetsError) {
-      alert("Quiz-Sets konnten nicht geladen werden: " + quizSetsError.message);
+    if (error) {
+      alert("Quiz-Sets konnten nicht geladen werden: " + error.message);
       return;
     }
 
-    const quizSetsWithQuestionCount = await Promise.all(
-      (quizSetsData || []).map(async (quizSet) => {
-        const { data: questionsData, error: questionsError } = await supabase
-          .from("questions")
-          .select("category, points")
-          .eq("quiz_set_id", quizSet.id);
-
-        if (questionsError) {
-          console.error(
-            "Quiz-Set-Fragen konnten für die Validierung nicht geladen werden:",
-            questionsError
-          );
-        }
-
-        const validationQuestions = questionsData || [];
-
-        return {
-          id: quizSet.id,
-          title: quizSet.title,
-          created_at: quizSet.created_at,
-          question_count: validationQuestions.length,
-          validation: validateQuizSetForBoard(validationQuestions),
-        };
-      })
-    );
-
-    setQuizSetsWithCount(quizSetsWithQuestionCount);
+    setQuizSetsWithCount((data || []) as QuizSetWithCount[]);
   }
 
   useEffect(() => {
     loadQuizSetsWithCount();
   }, []);
+
+async function reloadQuizSetQuestions(quizSetId: string) {
+  const { data, error } = await getQuizSetQuestions(quizSetId, "display");
+
+  if (error) {
+    alert("Quiz-Set-Fragen konnten nicht geladen werden: " + error.message);
+    return false;
+  }
+
+  setQuizSetQuestions((data || []) as QuizSetQuestion[]);
+  return true;
+}
 
 function handleToggleQuizSetValidation(quizSetId: string) {
   setExpandedValidationQuizSetId((currentQuizSetId) =>
@@ -271,10 +256,7 @@ async function handleShowReplacementCandidates(question: QuizSetQuestion) {
   const requiredDifficulty = question.points / 100;
 
   const { data: existingQuestions, error: existingQuestionsError } =
-    await supabase
-      .from("questions")
-      .select("source_pool_question_id")
-      .eq("quiz_set_id", expandedQuizSetId);
+    await getQuizSetQuestions(expandedQuizSetId, "summary");
 
   if (existingQuestionsError) {
     alert(
@@ -285,23 +267,17 @@ async function handleShowReplacementCandidates(question: QuizSetQuestion) {
   }
 
   const usedSourcePoolQuestionIds = new Set(
-    (existingQuestions || [])
+    ((existingQuestions || []) as QuizSetQuestion[])
       .map((existingQuestion) => existingQuestion.source_pool_question_id)
       .filter(Boolean)
   );
 
-  const { data: poolCandidates, error: poolCandidatesError } = await supabase
-    .from("pool_questions")
-    .select("*")
-    .eq("category", question.category)
-    .eq("difficulty", requiredDifficulty)
-    .eq("is_active", true)
-    .order("usage_count", { ascending: true })
-    .order("last_used_at", {
-      ascending: true,
-      nullsFirst: true,
-    })
-    .limit(20);
+  const { data: poolCandidates, error: poolCandidatesError } =
+    await getPoolQuestionCandidates({
+      category: question.category,
+      difficulty: requiredDifficulty,
+      limit: 20,
+    });
 
   if (poolCandidatesError) {
     alert(
@@ -311,7 +287,7 @@ async function handleShowReplacementCandidates(question: QuizSetQuestion) {
     return;
   }
 
-  const availableCandidates = (poolCandidates || []).filter(
+  const availableCandidates = ((poolCandidates || []) as ReplacementCandidate[]).filter(
     (poolQuestion) => !usedSourcePoolQuestionIds.has(poolQuestion.id)
   );
 
@@ -358,23 +334,11 @@ async function handleReplaceQuizSetQuestionWithCandidate(
   await incrementPoolQuestionUsage([replacementQuestion.id]);
 
   if (expandedQuizSetId) {
-    const { data, error: reloadError } = await supabase
-      .from("questions")
-      .select(
-        "id, question_number, category, points, question, solution, source_pool_question_id"
-      )
-      .eq("quiz_set_id", expandedQuizSetId)
-      .order("question_number", { ascending: true });
+    const reloaded = await reloadQuizSetQuestions(expandedQuizSetId);
 
-    if (reloadError) {
-      alert(
-        "Quiz-Set-Fragen konnten nicht neu geladen werden: " +
-          reloadError.message
-      );
+    if (!reloaded) {
       return;
     }
-
-    setQuizSetQuestions((data || []) as QuizSetQuestion[]);
   }
 
   setReplacementSelection(null);
@@ -386,13 +350,7 @@ async function handleReplaceQuizSetQuestionWithCandidate(
 
 async function handleFillMissingQuizSetQuestions(quizSetId: string) {
   const { data: existingQuestions, error: existingQuestionsError } =
-    await supabase
-      .from("questions")
-      .select(
-        "id, question_number, category, points, source_pool_question_id"
-      )
-      .eq("quiz_set_id", quizSetId)
-      .order("question_number", { ascending: true });
+    await getQuizSetQuestions(quizSetId, "summary");
 
   if (existingQuestionsError) {
     alert(
@@ -402,7 +360,9 @@ async function handleFillMissingQuizSetQuestions(quizSetId: string) {
     return;
   }
 
-  if (!existingQuestions || existingQuestions.length === 0) {
+  const existingQuizQuestions = (existingQuestions || []) as QuizSetQuestion[];
+
+  if (existingQuizQuestions.length === 0) {
     alert("Dieses Quiz-Set enthält keine Kategorien, die ergänzt werden können.");
     return;
   }
@@ -411,14 +371,14 @@ async function handleFillMissingQuizSetQuestions(quizSetId: string) {
 
   const categories = Array.from(
     new Set(
-      existingQuestions
+      existingQuizQuestions
         .map((question) => question.category)
         .filter(Boolean)
     )
   );
 
   const usedSourcePoolQuestionIds = new Set(
-    existingQuestions
+    existingQuizQuestions
       .map((question) => question.source_pool_question_id)
       .filter(Boolean)
   );
@@ -427,7 +387,7 @@ async function handleFillMissingQuizSetQuestions(quizSetId: string) {
   const warnings: string[] = [];
 
   for (const category of categories) {
-    const categoryQuestions = existingQuestions.filter(
+    const categoryQuestions = existingQuizQuestions.filter(
       (question) => question.category === category
     );
 
@@ -443,18 +403,11 @@ async function handleFillMissingQuizSetQuestions(quizSetId: string) {
       const requiredDifficulty = requiredPoint / 100;
 
       const { data: poolCandidates, error: poolCandidatesError } =
-        await supabase
-          .from("pool_questions")
-          .select("*")
-          .eq("category", category)
-          .eq("difficulty", requiredDifficulty)
-          .eq("is_active", true)
-          .order("usage_count", { ascending: true })
-          .order("last_used_at", {
-            ascending: true,
-            nullsFirst: true,
-          })
-          .limit(10);
+        await getPoolQuestionCandidates({
+          category,
+          difficulty: requiredDifficulty,
+          limit: 10,
+        });
 
       if (poolCandidatesError) {
         warnings.push(
@@ -480,7 +433,7 @@ async function handleFillMissingQuizSetQuestions(quizSetId: string) {
         quiz_set_id: quizSetId,
         room_code: "GENERATED",
         source_pool_question_id: selectedPoolQuestion.id,
-        question_number: existingQuestions.length + questionsToInsert.length + 1,
+        question_number: existingQuizQuestions.length + questionsToInsert.length + 1,
         category: selectedPoolQuestion.category,
         points: selectedPoolQuestion.difficulty * 100,
         question: selectedPoolQuestion.question,
@@ -519,21 +472,6 @@ async function handleFillMissingQuizSetQuestions(quizSetId: string) {
       continue;
     }
 
-    const { error: loadPoolQuestionError } =
-      await supabase
-        .from("pool_questions")
-        .select("usage_count")
-        .eq("id", sourceId)
-        .single();
-
-    if (loadPoolQuestionError) {
-      console.error(
-        "Pool-Frage konnte für usage_count nicht geladen werden:",
-        loadPoolQuestionError
-      );
-      continue;
-    }
-
     const { error: updatePoolQuestionError } =
       await incrementPoolQuestionUsage([sourceId]);
 
@@ -546,23 +484,11 @@ async function handleFillMissingQuizSetQuestions(quizSetId: string) {
   }
 
   if (expandedQuizSetId === quizSetId) {
-    const { data, error: reloadError } = await supabase
-      .from("questions")
-      .select(
-        "id, question_number, category, points, question, solution, source_pool_question_id"
-      )
-      .eq("quiz_set_id", quizSetId)
-      .order("question_number", { ascending: true });
+    const reloaded = await reloadQuizSetQuestions(quizSetId);
 
-    if (reloadError) {
-      alert(
-        "Quiz-Set-Fragen konnten nicht neu geladen werden: " +
-          reloadError.message
-      );
+    if (!reloaded) {
       return;
     }
-
-    setQuizSetQuestions((data || []) as QuizSetQuestion[]);
   }
 
   await loadQuizSetsWithCount();
@@ -591,24 +517,11 @@ async function handleDeleteQuizSetQuestion(questionId: string) {
 
   if (expandedQuizSetId) {
     const currentQuizSetId = expandedQuizSetId;
+    const reloaded = await reloadQuizSetQuestions(currentQuizSetId);
 
-    const { data, error: reloadError } = await supabase
-      .from("questions")
-      .select(
-        "id, question_number, category, points, question, solution, source_pool_question_id"
-      )
-      .eq("quiz_set_id", currentQuizSetId)
-      .order("question_number", { ascending: true });
-
-    if (reloadError) {
-      alert(
-        "Quiz-Set-Fragen konnten nicht neu geladen werden: " +
-          reloadError.message
-      );
+    if (!reloaded) {
       return;
     }
-
-    setQuizSetQuestions((data || []) as QuizSetQuestion[]);
   }
 
   setReplacementSelection(null);
@@ -658,21 +571,13 @@ async function handleToggleQuizSetQuestions(quizSetId: string) {
       return;
     }
 
-    const { data, error } = await supabase
-      .from("questions")
-      .select(
-        "id, question_number, category, points, question, solution, source_pool_question_id"
-      )
-      .eq("quiz_set_id", quizSetId)
-      .order("question_number", { ascending: true });
+    const reloaded = await reloadQuizSetQuestions(quizSetId);
 
-    if (error) {
-      alert("Quiz-Set-Fragen konnten nicht geladen werden: " + error.message);
+    if (!reloaded) {
       return;
     }
 
     setExpandedQuizSetId(quizSetId);
-    setQuizSetQuestions((data || []) as QuizSetQuestion[]);
   }
 
 return (

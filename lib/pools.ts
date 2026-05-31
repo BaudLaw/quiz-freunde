@@ -1,4 +1,3 @@
-import { supabase } from "./supabase";
 import type { PoolQuestion, QuestionPool } from "./poolTypes";
 
 type ApiResponse<T> = {
@@ -10,10 +9,19 @@ type ApiResponse<T> = {
 };
 
 export async function getQuestionPools() {
-  return supabase
-    .from("question_pools")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const response = await fetch("/api/admin/question-pools");
+  const result = (await response.json().catch(() => null)) as
+    | ApiResponse<QuestionPool[]>
+    | null;
+
+  if (!result) {
+    return {
+      data: null,
+      error: { message: "Pools konnten nicht geladen werden." },
+    };
+  }
+
+  return result;
 }
 
 export async function createQuestionPool(input: {
@@ -44,11 +52,47 @@ export async function createQuestionPool(input: {
 }
 
 export async function getPoolQuestions(poolId: string) {
-  return supabase
-    .from("pool_questions")
-    .select("*")
-    .eq("pool_id", poolId)
-    .order("created_at", { ascending: false });
+  const response = await fetch(
+    `/api/admin/pool-questions?poolId=${encodeURIComponent(poolId)}`
+  );
+  const result = (await response.json().catch(() => null)) as
+    | ApiResponse<PoolQuestion[]>
+    | null;
+
+  if (!result) {
+    return {
+      data: null,
+      error: { message: "Pool-Fragen konnten nicht geladen werden." },
+    };
+  }
+
+  return result;
+}
+
+export async function getPoolQuestionCandidates(input: {
+  category: string;
+  difficulty: number;
+  limit?: number;
+}) {
+  const params = new URLSearchParams({
+    category: input.category,
+    difficulty: String(input.difficulty),
+    isActive: "true",
+    limit: String(input.limit || 20),
+  });
+  const response = await fetch(`/api/admin/pool-questions?${params}`);
+  const result = (await response.json().catch(() => null)) as
+    | ApiResponse<PoolQuestion[]>
+    | null;
+
+  if (!result) {
+    return {
+      data: null,
+      error: { message: "Ersatzfragen konnten nicht geladen werden." },
+    };
+  }
+
+  return result;
 }
 
 export async function createPoolQuestion(input: Partial<PoolQuestion>) {

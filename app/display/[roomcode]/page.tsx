@@ -6,8 +6,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { supabase } from "@/lib/supabase";
 import { selectHostedQuestion } from "@/lib/hostAdmin";
+import { getGameRoomData } from "@/lib/gameRoom";
 import QRCode from "react-qr-code";
 
 
@@ -52,19 +52,25 @@ const solutionAudioRef =
 
   useEffect(() => {
     async function loadData() {
-      const { data: roomData } = await supabase
-        .from("rooms")
-        .select("*")
-        .eq("code", roomCode)
-        .maybeSingle();
+      const { data, error } = await getGameRoomData({
+        roomCode,
+        allQuestions: true,
+      });
 
-      if (!roomData) {
+      if (error) {
+        console.error("DISPLAY ROOM DATA ERROR", error);
+        return;
+      }
+
+      if (!data?.room) {
         setRoom(null);
         setQuestion(null);
         setLeaderboard([]);
         setAllQuestions([]);
         return;
       }
+
+      const roomData = data.room as any;
 
       if (
         roomData.game_state === "finished" &&
@@ -116,51 +122,19 @@ if (!roomData.feedback) {
   lastFeedbackRef.current = "";
 }
 
-const { data: questionData, error: questionError } = await supabase
-  .from("questions")
-  .select("*")
-  .eq("room_code", roomCode)
-  .eq("question_number", roomData.current_question)
-  .maybeSingle();
-
-if (questionError) {
-  console.error("DISPLAY QUESTION ERROR", questionError);
-}
+const questionData = data.question;
+const allQuestionsData = data.allQuestions;
 
 setQuestion(questionData || null);
-
-        const { data: allQuestionsData } = await supabase
-          .from("questions")
-          .select("*")
-          .eq("room_code", roomCode)
-          .order("question_number", {
-            ascending: true,
-          });
-
-      setAllQuestions(allQuestionsData || []);
+setAllQuestions(allQuestionsData || []);
 
 console.log("DISPLAY ROOM", roomCode);
 console.log("DISPLAY CURRENT QUESTION", roomData.current_question);
 console.log("DISPLAY ALL QUESTIONS", allQuestionsData);
 console.log("DISPLAY CURRENT QUESTION DATA", questionData);
 
-        const { data: playerData } = await supabase
-        .from("players")
-        .select("*")
-        .eq("room_code", roomCode)
-        .order("score", { ascending: false });
-
-      setLeaderboard(playerData || []);
-
-      const { data: buzzData } = await supabase
-  .from("buzzes")
-  .select("*")
-  .eq("room_code", roomCode)
-  .eq(
-    "question_number",
-    roomData.current_question
-  )
-  .eq("is_blocked", false);
+      setLeaderboard(data.leaderboard || []);
+      const buzzData = data.buzzes || [];
 
 const buzzCount = buzzData?.length || 0;
 

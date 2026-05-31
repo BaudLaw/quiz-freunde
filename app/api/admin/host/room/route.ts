@@ -44,6 +44,84 @@ async function updateRoom(roomCode: string, values: Record<string, unknown>) {
   return { data, error: null };
 }
 
+export async function GET(request: Request) {
+  if (!(await isAdminRequest())) {
+    return jsonError("Nicht autorisiert.", 401);
+  }
+
+  const url = new URL(request.url);
+  const roomCode = url.searchParams.get("roomCode")?.trim() || "";
+
+  if (!roomCode) {
+    return jsonError("Pflichtfelder fehlen.", 400);
+  }
+
+  const { data: roomData, error: roomError } = await supabase
+    .from("rooms")
+    .select("*")
+    .eq("code", roomCode)
+    .maybeSingle();
+
+  if (roomError) {
+    return jsonError(roomError.message, 500);
+  }
+
+  if (!roomData) {
+    return NextResponse.json({
+      data: {
+        room: null,
+        players: [],
+        activeQuestion: null,
+        buzzes: [],
+      },
+      error: null,
+    });
+  }
+
+  const { data: playerData, error: playersError } = await supabase
+    .from("players")
+    .select("*")
+    .eq("room_code", roomCode)
+    .order("score", { ascending: false });
+
+  if (playersError) {
+    return jsonError(playersError.message, 500);
+  }
+
+  const { data: questionData, error: questionError } = await supabase
+    .from("questions")
+    .select("*")
+    .eq("question_number", roomData.current_question)
+    .eq("room_code", roomCode)
+    .maybeSingle();
+
+  if (questionError) {
+    return jsonError(questionError.message, 500);
+  }
+
+  const { data: buzzData, error: buzzError } = await supabase
+    .from("buzzes")
+    .select("*")
+    .eq("room_code", roomCode)
+    .eq("question_number", roomData.current_question)
+    .eq("is_blocked", false)
+    .order("created_at", { ascending: true });
+
+  if (buzzError) {
+    return jsonError(buzzError.message, 500);
+  }
+
+  return NextResponse.json({
+    data: {
+      room: roomData,
+      players: playerData || [],
+      activeQuestion: questionData || null,
+      buzzes: buzzData || [],
+    },
+    error: null,
+  });
+}
+
 export async function POST(request: Request) {
   if (!(await isAdminRequest())) {
     return jsonError("Nicht autorisiert.", 401);

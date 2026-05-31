@@ -4,19 +4,7 @@ import { useEffect, useState } from "react";
 import AdminButton from "@/components/AdminButton";
 import AdminCard from "@/components/AdminCard";
 import AdminLayout from "@/components/AdminLayout";
-import { supabase } from "@/lib/supabase";
-
-type QuizSet = {
-  id: string;
-  title: string;
-};
-
-type Question = {
-  id: string;
-  quiz_set_id: string | null;
-  category: string | null;
-  points: number | null;
-};
+import { getAdminDashboardStats } from "@/lib/adminDashboard";
 
 type AdminStats = {
   pools: number;
@@ -25,10 +13,6 @@ type AdminStats = {
   quizSets: number;
   boardReadyQuizSets: number;
   incompleteQuizSets: number;
-};
-
-type BoardValidationResult = {
-  isBoardReady: boolean;
 };
 
 const emptyStats: AdminStats = {
@@ -51,48 +35,15 @@ export default function AdminPage() {
   async function loadAdminStats() {
     setIsLoading(true);
 
-    const [
-      poolsResult,
-      activePoolQuestionsResult,
-      inactivePoolQuestionsResult,
-      quizSetsResult,
-      questionsResult,
-    ] = await Promise.all([
-      supabase.from("question_pools").select("id"),
-      supabase.from("pool_questions").select("id").eq("is_active", true),
-      supabase.from("pool_questions").select("id").eq("is_active", false),
-      supabase.from("quiz_sets").select("id, title"),
-      supabase.from("questions").select("id, quiz_set_id, category, points"),
-    ]);
+    const { data, error } = await getAdminDashboardStats<AdminStats>();
 
-    const quizSets = (quizSetsResult.data || []) as QuizSet[];
-    const questions = (questionsResult.data || []) as Question[];
-
-    let boardReadyQuizSets = 0;
-    let incompleteQuizSets = 0;
-
-    for (const quizSet of quizSets) {
-      const quizSetQuestions = questions.filter(
-        (question) => question.quiz_set_id === quizSet.id
-      );
-
-      const validation = validateBoardQuestions(quizSetQuestions);
-
-      if (validation.isBoardReady) {
-        boardReadyQuizSets += 1;
-      } else {
-        incompleteQuizSets += 1;
-      }
+    if (error) {
+      alert("Statistiken konnten nicht geladen werden: " + error.message);
+      setIsLoading(false);
+      return;
     }
 
-    setStats({
-      pools: poolsResult.data?.length || 0,
-      activePoolQuestions: activePoolQuestionsResult.data?.length || 0,
-      inactivePoolQuestions: inactivePoolQuestionsResult.data?.length || 0,
-      quizSets: quizSets.length,
-      boardReadyQuizSets,
-      incompleteQuizSets,
-    });
+    setStats(data || emptyStats);
 
     setIsLoading(false);
   }
@@ -214,47 +165,4 @@ function StatCard({ label, value }: { label: string; value: number }) {
       </span>
     </div>
   );
-}
-
-function validateBoardQuestions(questions: Question[]): BoardValidationResult {
-  if (questions.length === 0) {
-    return { isBoardReady: false };
-  }
-
-  const categories = Array.from(
-    new Set(
-      questions
-        .map((question) => question.category)
-        .filter((category): category is string => Boolean(category))
-    )
-  );
-
-  if (categories.length === 0 || categories.length > 6) {
-    return { isBoardReady: false };
-  }
-
-  for (const category of categories) {
-    const categoryQuestions = questions.filter(
-      (question) => question.category === category
-    );
-
-    if (categoryQuestions.length !== 5) {
-      return { isBoardReady: false };
-    }
-
-    const points = categoryQuestions.map((question) => question.points);
-    const uniquePoints = new Set(points);
-
-    if (uniquePoints.size !== points.length) {
-      return { isBoardReady: false };
-    }
-
-    for (const requiredPoints of [100, 200, 300, 400, 500]) {
-      if (!uniquePoints.has(requiredPoints)) {
-        return { isBoardReady: false };
-      }
-    }
-  }
-
-  return { isBoardReady: true };
 }

@@ -10,6 +10,29 @@ type CreateQuestionPoolInput = {
   type?: unknown;
 };
 
+export async function GET() {
+  if (!(await isAdminRequest())) {
+    return NextResponse.json(
+      { data: null, error: { message: "Nicht autorisiert." } },
+      { status: 401 }
+    );
+  }
+
+  const { data, error } = await supabase
+    .from("question_pools")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return NextResponse.json(
+      { data: null, error: { message: error.message } },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({ data, error: null });
+}
+
 export async function POST(request: Request) {
   if (!(await isAdminRequest())) {
     return NextResponse.json(

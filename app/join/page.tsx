@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
 import { joinGameRoom, sendGameBuzz } from "@/lib/gameActions";
+import { getGameRoomData } from "@/lib/gameRoom";
 import { Suspense } from "react";
 
 function JoinPageContent() {
@@ -40,13 +40,17 @@ function JoinPageContent() {
   }, [hasJoined, roomCode]);
 
   async function loadRoomData() {
-    const { data: roomData } = await supabase
-      .from("rooms")
-      .select("*")
-      .eq("code", roomCode)
-      .maybeSingle();
+    const { data, error } = await getGameRoomData({
+      roomCode,
+      playerName: name,
+    });
 
-    if (!roomData) {
+    if (error) {
+      console.error("Raumdaten konnten nicht geladen werden:", error);
+      return;
+    }
+
+    if (!data?.room) {
       setRoom(null);
       setHasJoined(false);
       setPlayers([]);
@@ -56,26 +60,10 @@ function JoinPageContent() {
       return;
     }
 
-setRoom(roomData);
-      const { data: blockedBuzzes } = await supabase
-  .from("buzzes")
-  .select("*")
-  .eq("room_code", roomCode)
-  .eq("question_number", roomData.current_question)
-  .eq("player_name", name)
-  .eq("is_blocked", true)
-  .limit(1);
-
-setIsBlocked((blockedBuzzes?.length || 0) > 0);
-
-    const { data: playerData } = await supabase
-      .from("players")
-      .select("*")
-      .eq("room_code", roomCode)
-      .order("score", { ascending: false });
-
-    setPlayers(playerData || []);
-    setLeaderboard(playerData || []);
+setRoom(data.room);
+setIsBlocked(data.isBlocked);
+setPlayers(data.players || []);
+setLeaderboard(data.leaderboard || []);
   }
 
   async function joinRoom() {

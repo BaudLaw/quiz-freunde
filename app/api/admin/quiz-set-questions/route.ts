@@ -44,6 +44,48 @@ function pickAllowedQuestionValues(values: unknown) {
   return nextValues;
 }
 
+export async function GET(request: Request) {
+  if (!(await isAdminRequest())) {
+    return NextResponse.json(
+      { data: null, error: { message: "Nicht autorisiert." } },
+      { status: 401 }
+    );
+  }
+
+  const url = new URL(request.url);
+  const quizSetId = url.searchParams.get("quizSetId") || "";
+  const fields = url.searchParams.get("fields") || "full";
+
+  if (!quizSetId) {
+    return NextResponse.json(
+      { data: null, error: { message: "Pflichtfelder fehlen." } },
+      { status: 400 }
+    );
+  }
+
+  const selectFields =
+    fields === "summary"
+      ? "id, question_number, category, points, source_pool_question_id"
+      : fields === "display"
+        ? "id, question_number, category, points, question, solution, source_pool_question_id"
+        : "*";
+
+  const { data, error } = await supabase
+    .from("questions")
+    .select(selectFields)
+    .eq("quiz_set_id", quizSetId)
+    .order("question_number", { ascending: true });
+
+  if (error) {
+    return NextResponse.json(
+      { data: null, error: { message: error.message } },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({ data, error: null });
+}
+
 export async function POST(request: Request) {
   if (!(await isAdminRequest())) {
     return NextResponse.json(

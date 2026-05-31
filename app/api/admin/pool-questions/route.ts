@@ -38,6 +38,67 @@ function stringArray(value: unknown) {
     : [];
 }
 
+export async function GET(request: Request) {
+  if (!(await isAdminRequest())) {
+    return NextResponse.json(
+      { data: null, error: { message: "Nicht autorisiert." } },
+      { status: 401 }
+    );
+  }
+
+  const url = new URL(request.url);
+  const poolId = optionalString(url.searchParams.get("poolId"));
+  const category = optionalString(url.searchParams.get("category"));
+  const difficulty = Number(url.searchParams.get("difficulty"));
+  const isActive = url.searchParams.get("isActive");
+  const limit = Number(url.searchParams.get("limit"));
+
+  let query = supabase.from("pool_questions").select("*");
+
+  if (poolId) {
+    query = query.eq("pool_id", poolId);
+  }
+
+  if (category) {
+    query = query.eq("category", category);
+  }
+
+  if (Number.isInteger(difficulty)) {
+    query = query.eq("difficulty", difficulty);
+  }
+
+  if (isActive === "true") {
+    query = query.eq("is_active", true);
+  }
+
+  if (isActive === "false") {
+    query = query.eq("is_active", false);
+  }
+
+  if (Number.isInteger(limit) && limit > 0) {
+    query = query.limit(limit);
+  }
+
+  if (category || Number.isInteger(difficulty)) {
+    query = query
+      .order("usage_count", { ascending: true })
+      .order("last_used_at", { ascending: true, nullsFirst: true });
+  } else {
+    query = query.order("created_at", { ascending: false });
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    return NextResponse.json(
+      { data: null, error: { message: error.message } },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({ data, error: null });
+}
+
 export async function POST(request: Request) {
   if (!(await isAdminRequest())) {
     return NextResponse.json(

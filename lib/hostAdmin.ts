@@ -40,6 +40,30 @@ async function runHostRoomAction(input: HostRoomActionInput) {
   return result;
 }
 
+export async function getHostedRoomData(roomCode: string) {
+  const response = await fetch(
+    `/api/admin/host/room?roomCode=${encodeURIComponent(roomCode)}`
+  );
+
+  const result = (await response.json().catch(() => null)) as
+    | HostAdminResponse<{
+        room: unknown;
+        players: unknown[];
+        activeQuestion: unknown;
+        buzzes: unknown[];
+      }>
+    | null;
+
+  if (!result) {
+    return {
+      data: null,
+      error: { message: "Raumdaten konnten nicht geladen werden." },
+    };
+  }
+
+  return result;
+}
+
 export async function resetHostedRoom(roomCode: string) {
   const response = await fetch("/api/admin/host/reset", {
     method: "POST",

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
-import { supabase } from "@/lib/supabase";
 import JSZip from "jszip";
 import AdminLayout from "@/components/AdminLayout";
 import { uploadAdminMedia } from "@/lib/adminStorage";
@@ -11,6 +10,7 @@ import {
   clearHostedFeedback,
   deleteHostEditorQuestion,
   finishHostedRoom,
+  getHostedRoomData,
   importHostQuizSet,
   markHostedCorrect,
   markHostedWrong,
@@ -23,6 +23,7 @@ import {
   startHostedQuiz,
   startHostedTimer,
 } from "@/lib/hostAdmin";
+import { getQuizSetQuestions, getQuizSets } from "@/lib/quizSets";
 
 function generateCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -192,48 +193,14 @@ export default function HostPage() {
   }, [roomCode]);
 
 async function loadQuizSets() {
-  const { data, error } = await supabase
-    .from("quiz_sets")
-    .select("*")
-    .order("created_at", {
-      ascending: false,
-    });
+  const { data, error } = await getQuizSets("list");
 
   if (error) {
     alert("Quiz-Sets konnten nicht geladen werden: " + error.message);
     return;
   }
 
-  const quizSetsWithValidation = await Promise.all(
-    (data || []).map(async (quizSet: any) => {
-      const { data: questionsData, error: questionsError } = await supabase
-        .from("questions")
-        .select("category, points")
-        .eq("quiz_set_id", quizSet.id);
-
-      if (questionsError) {
-        console.error(
-          "Quiz-Set-Fragen konnten für die Host-Validierung nicht geladen werden:",
-          questionsError
-        );
-      }
-
-      const validation = validateQuizSetForBoard(
-        (questionsData || []).map((question: any) => ({
-          category: question.category,
-          points: Number(question.points),
-        }))
-      );
-
-      return {
-        ...quizSet,
-        question_count: questionsData?.length || 0,
-        validation,
-      };
-    })
-  );
-
-  setSavedQuizSets(quizSetsWithValidation);
+  setSavedQuizSets(data || []);
 }
 
   async function loadQuizEditor(
@@ -246,13 +213,12 @@ async function loadQuizSets() {
 
   setEditingQuiz(selectedQuiz);
 
-  const { data } = await supabase
-    .from("questions")
-    .select("*")
-    .eq("quiz_set_id", quizSetId)
-    .order("question_number", {
-      ascending: true,
-    });
+  const { data, error } = await getQuizSetQuestions(quizSetId, "full");
+
+  if (error) {
+    alert("Quiz-Fragen konnten nicht geladen werden: " + error.message);
+    return;
+  }
 
   setEditingQuestions(data || []);
 }
@@ -280,53 +246,20 @@ await loadQuizEditor(editingQuiz.id);
 }
 
   async function loadRoomData() {
-    const { data: roomData } = await supabase
-      .from("rooms")
-      .select("*")
-      .eq("code", roomCode)
-      .single();
+    const { data, error } = await getHostedRoomData(roomCode);
 
-    if (!roomData) return;
+    if (error) {
+      console.error("Raumdaten konnten nicht geladen werden:", error);
+      return;
+    }
 
-    setRoom(roomData);
+    if (!data?.room) return;
 
-    const { data: playerData } = await supabase
-      .from("players")
-      .select("*")
-      .eq("room_code", roomCode)
-      .order("score", {
-        ascending: false,
-      });
-
-    setPlayers(playerData || []);
-    setLeaderboard(playerData || []);
-
-    const { data: questionData } = await supabase
-      .from("questions")
-      .select("*")
-      .eq(
-        "question_number",
-        roomData.current_question
-      )
-      .eq("room_code", roomCode)
-      .single();
-
-    setActiveQuestion(questionData);
-    
-    const { data: buzzData } = await supabase
-  .from("buzzes")
-  .select("*")
-  .eq("room_code", roomCode)
-  .eq(
-    "question_number",
-    roomData.current_question
-  )
-  .eq("is_blocked", false)
-  .order("created_at", {
-    ascending: true,
-  });
-
-setBuzzes(buzzData || []);
+    setRoom(data.room);
+    setPlayers(data.players || []);
+    setLeaderboard(data.players || []);
+    setActiveQuestion(data.activeQuestion);
+    setBuzzes(data.buzzes || []);
   }
 
   async function importCsvQuiz() {

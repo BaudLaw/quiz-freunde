@@ -3,6 +3,49 @@ type QuizSetResponse<T> = {
   error: { message: string } | null;
 };
 
+export async function getQuizSets(mode: "list" | "options" = "list") {
+  const response = await fetch(
+    `/api/admin/quiz-sets?mode=${encodeURIComponent(mode)}`
+  );
+
+  const result = (await response.json().catch(() => null)) as
+    | QuizSetResponse<unknown[]>
+    | null;
+
+  if (!result) {
+    return {
+      data: null,
+      error: { message: "Quiz-Sets konnten nicht geladen werden." },
+    };
+  }
+
+  return result;
+}
+
+export async function getQuizSetQuestions(
+  quizSetId: string,
+  fields: "full" | "summary" | "display" = "full"
+) {
+  const response = await fetch(
+    `/api/admin/quiz-set-questions?quizSetId=${encodeURIComponent(
+      quizSetId
+    )}&fields=${encodeURIComponent(fields)}`
+  );
+
+  const result = (await response.json().catch(() => null)) as
+    | QuizSetResponse<unknown[]>
+    | null;
+
+  if (!result) {
+    return {
+      data: null,
+      error: { message: "Quiz-Set-Fragen konnten nicht geladen werden." },
+    };
+  }
+
+  return result;
+}
+
 export async function updateQuizSetTitle(id: string, title: string) {
   const response = await fetch("/api/admin/quiz-sets", {
     method: "PATCH",
