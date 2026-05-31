@@ -7,10 +7,15 @@ import JSZip from "jszip";
 import AdminLayout from "@/components/AdminLayout";
 import {
   assignHostedBuzzAnswer,
+  clearHostedFeedback,
+  finishHostedRoom,
+  markHostedCorrect,
+  markHostedWrong,
   openHostedBoard,
   resetHostedRoom,
   setHostedGameState,
   setHostedTurnPlayer,
+  showHostedSolution,
   startHostedQuiz,
 } from "@/lib/hostAdmin";
 
@@ -503,7 +508,7 @@ const zipQuizSetId = zipQuizSetResponse.data.id;
   const { error } = await setHostedGameState(roomCode, state);
 
   if (error) {
-    alert("Spielstatus konnte nicht geÃ¤ndert werden: " + error.message);
+    alert("Spielstatus konnte nicht geaendert werden: " + error.message);
     return;
   }
 
@@ -524,87 +529,24 @@ const zipQuizSetId = zipQuizSetResponse.data.id;
   }
 
   async function markCorrect() {
-  const answeringPlayer =
-    room?.active_player || room?.turn_player;
+  const { data, error } = await markHostedCorrect(roomCode);
 
-  if (!answeringPlayer) {
-    alert("Kein Spieler ausgewählt");
+  if (error || !data) {
+    alert(error?.message || "Antwort konnte nicht als richtig gewertet werden.");
     return;
   }
 
-  const { data: playerData } =
-    await supabase
-      .from("players")
-      .select("*")
-      .eq("room_code", roomCode)
-      .eq("player_name", answeringPlayer)
-      .single();
-
-  if (playerData && activeQuestion) {
-    await supabase
-      .from("players")
-      .update({
-        score:
-          Number(playerData.score) +
-          Number(activeQuestion.points || 0),
-      })
-      .eq("id", playerData.id);
-  }
-
-  const currentIndex =
-    room?.turn_index || 0;
-
-  const nextIndex =
-    players.length > 0
-      ? (currentIndex + 1) % players.length
-      : 0;
-
-  const nextPlayer =
-    players[nextIndex];
-
-  await supabase
-    .from("rooms")
-    .update({
-      game_state: "solution",
-      feedback: "correct",
-      timer_end: 0,
-      active_player: "",
-      buzz_locked: true,
-      turn_index: nextIndex,
-      turn_player: nextPlayer?.player_name || "",
-    })
-    .eq("code", roomCode);
-
-  const { data: remainingQuestions } =
-    await supabase
-      .from("questions")
-      .select("*")
-      .eq("room_code", roomCode)
-      .eq("is_played", false);
-
-  if (
-    remainingQuestions &&
-    remainingQuestions.length === 0
-  ) {
-    setTimeout(async () => {
-      await supabase
-        .from("rooms")
-        .update({
-          game_state: "finished",
-          timer_end: 0,
-        })
-        .eq("code", roomCode);
+  if (data.shouldFinishAfterDelay) {
+    setTimeout(() => {
+      finishHostedRoom(roomCode);
     }, 3500);
   }
 
-  setTimeout(async () => {
-    await supabase
-      .from("rooms")
-      .update({
-        feedback: "",
-      })
-      .eq("code", roomCode);
-  }, 1500);
+  if (data.shouldClearFeedback) {
+    setTimeout(() => {
+      clearHostedFeedback(roomCode);
+    }, 1500);
+  }
 
   await loadRoomData();
 }
@@ -772,85 +714,35 @@ async function processZipImport() {
   
 
   async function markWrong() {
-  const { data: roomData } = await supabase
-    .from("rooms")
-    .select("*")
-    .eq("code", roomCode)
-    .single();
+  const { data, error } = await markHostedWrong(roomCode);
 
-  if (roomData?.active_player) {
-    const { data: playerData } =
-      await supabase
-        .from("players")
-        .select("*")
-        .eq("room_code", roomCode)
-        .eq(
-          "player_name",
-          roomData.active_player
-        )
-        .single();
-
-    const { data: questionData } =
-  await supabase
-    .from("questions")
-    .select("*")
-    .eq("room_code", roomCode)
-    .eq(
-      "question_number",
-      roomData.current_question
-    )
-    .single();
-
-      if (playerData && questionData) {
-        await supabase
-          .from("players")
-          .update({
-            score:
-              Number(playerData.score) -
-              Math.floor(
-                Number(questionData.points || 0) / 2
-              ),
-          })
-          .eq("id", playerData.id);
-      }
-    await supabase
-  .from("buzzes")
-  .delete()
-  .eq("room_code", roomCode)
-  .eq("question_number", roomData.current_question)
-  .eq("player_name", roomData.active_player);
-
-await supabase
-  .from("buzzes")
-  .insert([
-    {
-      room_code: roomCode,
-      question_number: roomData.current_question,
-      player_name: roomData.active_player,
-      is_blocked: true,
-    },
-  ]);
+  if (error || !data) {
+    alert(error?.message || "Antwort konnte nicht als falsch gewertet werden.");
+    return;
   }
 
-  await supabase
-    .from("rooms")
-    .update({
-      game_state: "buzzing_open",
-      active_player: "",
-      buzz_locked: false,
-      feedback: "wrong",
-      timer_end: 0,
-    })
-    .eq("code", roomCode);
+  if (data.shouldClearFeedback) {
+    setTimeout(() => {
+      clearHostedFeedback(roomCode);
+    }, 1500);
+  }
 
-  setTimeout(async () => {
-    await supabase
-      .from("rooms")
-      .update({
-        feedback: "",
-      })
-      .eq("code", roomCode);
-  }, 1500);
+  await loadRoomData();
+}
+
+  async function showSolution() {
+  const { data, error } = await showHostedSolution(roomCode);
+
+  if (error || !data) {
+    alert(error?.message || "Loesung konnte nicht angezeigt werden.");
+    return;
+  }
+
+  if (data.shouldFinishAfterDelay) {
+    setTimeout(() => {
+      finishHostedRoom(roomCode);
+    }, 3500);
+  }
 
   await loadRoomData();
 }
@@ -977,58 +869,7 @@ return (
               </button>
 
               <button
-                onClick={async () => {
-                  const { data: roomData } = await supabase
-                    .from("rooms")
-                    .select("*")
-                    .eq("code", roomCode)
-                    .single();
-
-                  const currentIndex = roomData?.turn_index || 0;
-
-                  const nextIndex =
-                    players.length > 0
-                      ? (currentIndex + 1) % players.length
-                      : 0;
-
-                  const nextPlayer = players[nextIndex];
-
-                  await supabase
-                    .from("rooms")
-                    .update({
-                      game_state: "solution",
-                      timer_end: 0,
-                      turn_index: nextIndex,
-                      turn_player: nextPlayer?.player_name || "",
-                      active_player: "",
-                      buzz_locked: true,
-                      feedback: "",
-                    })
-                    .eq("code", roomCode);
-
-                  const { data: remainingQuestions } = await supabase
-                    .from("questions")
-                    .select("*")
-                    .eq("room_code", roomCode)
-                    .eq("is_played", false);
-
-                  if (
-                    remainingQuestions &&
-                    remainingQuestions.length === 0
-                  ) {
-                    setTimeout(async () => {
-                      await supabase
-                        .from("rooms")
-                        .update({
-                          game_state: "finished",
-                          timer_end: 0,
-                        })
-                        .eq("code", roomCode);
-                    }, 3500);
-                  }
-
-                  await loadRoomData();
-                }}
+                onClick={showSolution}
                 className={`rounded-xl p-3 ${
                   room?.game_state === "solution"
                     ? "bg-white text-black font-bold"

@@ -150,5 +150,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ data: { room: data }, error: null });
   }
 
+  if (action === "clear-feedback") {
+    const { data, error } = await updateRoom(roomCode, {
+      feedback: "",
+    });
+
+    if (error) {
+      return jsonError(error.message, 500);
+    }
+
+    return NextResponse.json({ data: { room: data }, error: null });
+  }
+
+  if (action === "finish-room") {
+    const { data, error } = await updateRoom(roomCode, {
+      game_state: "finished",
+      timer_end: 0,
+    });
+
+    if (error) {
+      return jsonError(error.message, 500);
+    }
+
+    return NextResponse.json({ data: { room: data }, error: null });
+  }
+
   return jsonError("Aktion ist ungueltig.", 400);
 }
