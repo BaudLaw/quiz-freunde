@@ -71,6 +71,32 @@ export async function deleteQuizSetQuestion(id: string) {
   return result;
 }
 
+export async function updateQuizSetQuestion(
+  id: string,
+  values: Record<string, unknown>
+) {
+  const response = await fetch("/api/admin/quiz-set-questions", {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ id, values }),
+  });
+
+  const result = (await response.json().catch(() => null)) as
+    | QuizSetResponse<{ id: string }>
+    | null;
+
+  if (!result) {
+    return {
+      data: null,
+      error: { message: "Frage konnte nicht aktualisiert werden." },
+    };
+  }
+
+  return result;
+}
+
 export async function insertQuizSetQuestions(questions: unknown[]) {
   const response = await fetch("/api/admin/quiz-set-questions", {
     method: "POST",

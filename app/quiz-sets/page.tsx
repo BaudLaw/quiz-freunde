@@ -10,6 +10,7 @@ import {
   deleteQuizSetQuestion,
   duplicateQuizSet,
   insertQuizSetQuestions,
+  updateQuizSetQuestion,
   updateQuizSetTitle,
 } from "@/lib/quizSets";
 
@@ -331,9 +332,9 @@ async function handleReplaceQuizSetQuestionWithCandidate(
   question: QuizSetQuestion,
   replacementQuestion: ReplacementCandidate
 ) {
-  const { error: updateQuestionError } = await supabase
-    .from("questions")
-    .update({
+  const { error: updateQuestionError } = await updateQuizSetQuestion(
+    question.id,
+    {
       source_pool_question_id: replacementQuestion.id,
       category: replacementQuestion.category,
       points: replacementQuestion.difficulty * 100,
@@ -346,8 +347,8 @@ async function handleReplaceQuizSetQuestionWithCandidate(
       solution_image_url: replacementQuestion.solution_image_url || "",
       solution_audio_url: replacementQuestion.solution_audio_url || "",
       is_played: false,
-    })
-    .eq("id", question.id);
+    }
+  );
 
   if (updateQuestionError) {
     alert("Frage konnte nicht ersetzt werden: " + updateQuestionError.message);

@@ -8,6 +8,42 @@ type InsertQuizSetQuestionsInput = {
   questions?: unknown;
 };
 
+type UpdateQuizSetQuestionInput = {
+  id?: unknown;
+  values?: unknown;
+};
+
+const allowedUpdateFields = new Set([
+  "source_pool_question_id",
+  "category",
+  "points",
+  "question",
+  "solution",
+  "accepted_answers",
+  "host_notes",
+  "image_url",
+  "audio_url",
+  "solution_image_url",
+  "solution_audio_url",
+  "is_played",
+]);
+
+function pickAllowedQuestionValues(values: unknown) {
+  if (typeof values !== "object" || values === null) {
+    return null;
+  }
+
+  const nextValues: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(values)) {
+    if (allowedUpdateFields.has(key)) {
+      nextValues[key] = value;
+    }
+  }
+
+  return nextValues;
+}
+
 export async function POST(request: Request) {
   if (!(await isAdminRequest())) {
     return NextResponse.json(
@@ -59,6 +95,60 @@ export async function POST(request: Request) {
     data: { insertedCount: questionsToInsert.length },
     error: null,
   });
+}
+
+export async function PATCH(request: Request) {
+  if (!(await isAdminRequest())) {
+    return NextResponse.json(
+      { data: null, error: { message: "Nicht autorisiert." } },
+      { status: 401 }
+    );
+  }
+
+  let input: UpdateQuizSetQuestionInput;
+
+  try {
+    input = await request.json();
+  } catch {
+    return NextResponse.json(
+      { data: null, error: { message: "Ungueltige Anfrage." } },
+      { status: 400 }
+    );
+  }
+
+  const id = typeof input.id === "string" ? input.id.trim() : "";
+  const values = pickAllowedQuestionValues(input.values);
+
+  if (!id || !values || Object.keys(values).length === 0) {
+    return NextResponse.json(
+      { data: null, error: { message: "Pflichtfelder fehlen." } },
+      { status: 400 }
+    );
+  }
+
+  const { data, error } = await supabase
+    .from("questions")
+    .update(values)
+    .eq("id", id)
+    .eq("room_code", "GENERATED")
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    return NextResponse.json(
+      { data: null, error: { message: error.message } },
+      { status: 500 }
+    );
+  }
+
+  if (!data) {
+    return NextResponse.json(
+      { data: null, error: { message: "Frage wurde nicht gefunden." } },
+      { status: 404 }
+    );
+  }
+
+  return NextResponse.json({ data, error: null });
 }
 
 export async function DELETE(request: Request) {
