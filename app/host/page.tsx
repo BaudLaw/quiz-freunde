@@ -8,6 +8,7 @@ import AdminLayout from "@/components/AdminLayout";
 import {
   assignHostedBuzzAnswer,
   clearHostedFeedback,
+  deleteHostEditorQuestion,
   finishHostedRoom,
   markHostedCorrect,
   markHostedWrong,
@@ -16,6 +17,7 @@ import {
   setHostedGameState,
   setHostedTurnPlayer,
   showHostedSolution,
+  saveHostQuizEditor,
   startHostedQuiz,
   startHostedTimer,
 } from "@/lib/hostAdmin";
@@ -255,57 +257,17 @@ async function loadQuizSets() {
 
 async function saveQuizEditor() {
   if (!editingQuiz?.id) {
-    alert("Kein Quiz ausgewählt");
+    alert("Kein Quiz ausgewaehlt");
     return;
   }
 
-  const { error: deleteError } = await supabase
-    .from("questions")
-    .delete()
-    .eq("quiz_set_id", editingQuiz.id);
-
-  if (deleteError) {
-    alert(
-      "Alte Fragen konnten nicht gelöscht werden: " +
-        deleteError.message
-    );
-    return;
-  }
-
-  const questionsToInsert = editingQuestions.map(
-    (question: any, index: number) => ({
-      quiz_set_id: editingQuiz.id,
-      room_code: "",
-      question_number: index + 1,
-
-      category: question.category,
-      points: Number(question.points || 100),
-
-      question: question.question,
-      solution: question.solution,
-
-      image_url: question.image_url || "",
-      audio_url: question.audio_url || "",
-
-      accepted_answers:
-        question.accepted_answers || "",
-
-      host_notes:
-        question.host_notes || "",
-
-      is_played: false,
-    })
+  const { error } = await saveHostQuizEditor(
+    editingQuiz.id,
+    editingQuestions
   );
 
-  const { error: insertError } = await supabase
-    .from("questions")
-    .insert(questionsToInsert);
-
-  if (insertError) {
-    alert(
-      "Fragen konnten nicht gespeichert werden: " +
-        insertError.message
-    );
+  if (error) {
+    alert("Fragen konnten nicht gespeichert werden: " + error.message);
     return;
   }
 
@@ -1296,34 +1258,24 @@ savedQuizSets.map((quiz: any) => (
               type="button"
               onClick={async () => {
                 const confirmDelete = confirm(
-                  "Diese Frage wirklich löschen?"
+                  "Diese Frage wirklich loeschen?"
                 );
 
                 if (!confirmDelete) return;
 
-                if (question.id) {
-                  const { error } = await supabase
-                    .from("questions")
-                    .delete()
-                    .eq("id", question.id);
+                const { error } = await deleteHostEditorQuestion(
+                  question.id
+                    ? { id: question.id }
+                    : {
+                        quizSetId: editingQuiz.id,
+                        questionNumber: question.question_number,
+                      }
+                );
 
-                  if (error) {
-                    alert("Löschen fehlgeschlagen: " + error.message);
-                    console.error(error);
-                    return;
-                  }
-                } else {
-                  const { error } = await supabase
-                    .from("questions")
-                    .delete()
-                    .eq("quiz_set_id", editingQuiz.id)
-                    .eq("question_number", question.question_number);
-
-                  if (error) {
-                    alert("Löschen fehlgeschlagen: " + error.message);
-                    console.error(error);
-                    return;
-                  }
+                if (error) {
+                  alert("Loeschen fehlgeschlagen: " + error.message);
+                  console.error(error);
+                  return;
                 }
 
                 setEditingQuestions((prev) =>
@@ -1334,7 +1286,7 @@ savedQuizSets.map((quiz: any) => (
                   )
                 );
 
-                alert("Frage gelöscht");
+                alert("Frage geloescht");
               }}
               className="bg-red-600 rounded-xl px-4 py-2 font-bold"
             >

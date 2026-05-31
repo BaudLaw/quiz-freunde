@@ -10,6 +10,12 @@ type HostRoomActionInput = {
   playerName?: string;
 };
 
+type DeleteHostEditorQuestionInput = {
+  id?: string;
+  quizSetId?: string;
+  questionNumber?: number;
+};
+
 async function runHostRoomAction(input: HostRoomActionInput) {
   const response = await fetch("/api/admin/host/room", {
     method: "POST",
@@ -175,4 +181,55 @@ export async function markHostedWrong(roomCode: string) {
 
 export async function showHostedSolution(roomCode: string) {
   return runHostAnswerAction("show-solution", roomCode);
+}
+
+export async function saveHostQuizEditor(
+  quizSetId: string,
+  questions: unknown[]
+) {
+  const response = await fetch("/api/admin/host/editor", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ quizSetId, questions }),
+  });
+
+  const result = (await response.json().catch(() => null)) as
+    | HostAdminResponse<{ savedCount: number }>
+    | null;
+
+  if (!result) {
+    return {
+      data: null,
+      error: { message: "Quiz konnte nicht gespeichert werden." },
+    };
+  }
+
+  return result;
+}
+
+export async function deleteHostEditorQuestion(
+  input: DeleteHostEditorQuestionInput
+) {
+  const response = await fetch("/api/admin/host/editor", {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
+  });
+
+  const result = (await response.json().catch(() => null)) as
+    | HostAdminResponse<null>
+    | null;
+
+  if (!result) {
+    return {
+      data: null,
+      error: { message: "Frage konnte nicht geloescht werden." },
+    };
+  }
+
+  return result;
 }
