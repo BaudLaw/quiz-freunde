@@ -5,7 +5,14 @@ import QRCode from "react-qr-code";
 import { supabase } from "@/lib/supabase";
 import JSZip from "jszip";
 import AdminLayout from "@/components/AdminLayout";
-import { resetHostedRoom, startHostedQuiz } from "@/lib/hostAdmin";
+import {
+  assignHostedBuzzAnswer,
+  openHostedBoard,
+  resetHostedRoom,
+  setHostedGameState,
+  setHostedTurnPlayer,
+  startHostedQuiz,
+} from "@/lib/hostAdmin";
 
 function generateCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -493,16 +500,12 @@ const zipQuizSetId = zipQuizSetResponse.data.id;
   }
 
   async function setGameState(state: string) {
-  await supabase
-    .from("rooms")
-    .update({
-      game_state: state,
-    })
-    .eq("code", roomCode);
+  const { error } = await setHostedGameState(roomCode, state);
 
-  setRoom((prev: any) =>
-    prev ? { ...prev, game_state: state } : prev
-  );
+  if (error) {
+    alert("Spielstatus konnte nicht geÃ¤ndert werden: " + error.message);
+    return;
+  }
 
   await loadRoomData();
 }
@@ -510,12 +513,14 @@ const zipQuizSetId = zipQuizSetResponse.data.id;
   async function setTurnPlayer(
     playerName: string
   ) {
-    await supabase
-      .from("rooms")
-      .update({
-        turn_player: playerName,
-      })
-      .eq("code", roomCode);
+    const { error } = await setHostedTurnPlayer(roomCode, playerName);
+
+    if (error) {
+      alert("Spieler konnte nicht gesetzt werden: " + error.message);
+      return;
+    }
+
+    await loadRoomData();
   }
 
   async function markCorrect() {
@@ -953,18 +958,12 @@ return (
 
               <button
                 onClick={async () => {
-                  const firstPlayer = players[0];
+                  const { error } = await openHostedBoard(roomCode);
 
-                  await supabase
-                    .from("rooms")
-                    .update({
-                      game_state: "board",
-                      turn_player:
-                        room?.turn_player ||
-                        firstPlayer?.player_name ||
-                        "",
-                    })
-                    .eq("code", roomCode);
+                  if (error) {
+                    alert("Quizwand konnte nicht geÃ¶ffnet werden: " + error.message);
+                    return;
+                  }
 
                   await loadRoomData();
                 }}
@@ -1161,14 +1160,18 @@ return (
                   <button
                     key={buzz.id || buzz.tempId}
                     onClick={async () => {
-                      await supabase
-                        .from("rooms")
-                        .update({
-                          active_player: buzz.player_name,
-                          game_state: "player_answering",
-                          buzz_locked: true,
-                        })
-                        .eq("code", roomCode);
+                      const { error } = await assignHostedBuzzAnswer(
+                        roomCode,
+                        buzz.player_name
+                      );
+
+                      if (error) {
+                        alert(
+                          "Antwortrecht konnte nicht gesetzt werden: " +
+                            error.message
+                        );
+                        return;
+                      }
 
                       await loadRoomData();
                     }}

@@ -3,6 +3,36 @@ type HostAdminResponse<T> = {
   error: { message: string } | null;
 };
 
+type HostRoomActionInput = {
+  action: string;
+  roomCode: string;
+  gameState?: string;
+  playerName?: string;
+};
+
+async function runHostRoomAction(input: HostRoomActionInput) {
+  const response = await fetch("/api/admin/host/room", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
+  });
+
+  const result = (await response.json().catch(() => null)) as
+    | HostAdminResponse<{ room: unknown }>
+    | null;
+
+  if (!result) {
+    return {
+      data: null,
+      error: { message: "Host-Aktion konnte nicht ausgefuehrt werden." },
+    };
+  }
+
+  return result;
+}
+
 export async function resetHostedRoom(roomCode: string) {
   const response = await fetch("/api/admin/host/reset", {
     method: "POST",
@@ -24,6 +54,40 @@ export async function resetHostedRoom(roomCode: string) {
   }
 
   return result;
+}
+
+export async function setHostedGameState(roomCode: string, gameState: string) {
+  return runHostRoomAction({
+    action: "set-game-state",
+    roomCode,
+    gameState,
+  });
+}
+
+export async function setHostedTurnPlayer(roomCode: string, playerName: string) {
+  return runHostRoomAction({
+    action: "set-turn-player",
+    roomCode,
+    playerName,
+  });
+}
+
+export async function openHostedBoard(roomCode: string) {
+  return runHostRoomAction({
+    action: "open-board",
+    roomCode,
+  });
+}
+
+export async function assignHostedBuzzAnswer(
+  roomCode: string,
+  playerName: string
+) {
+  return runHostRoomAction({
+    action: "assign-buzz-answer",
+    roomCode,
+    playerName,
+  });
 }
 
 export async function startHostedQuiz(quizSetId: string) {
