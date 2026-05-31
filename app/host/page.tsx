@@ -5,7 +5,7 @@ import QRCode from "react-qr-code";
 import { supabase } from "@/lib/supabase";
 import JSZip from "jszip";
 import AdminLayout from "@/components/AdminLayout";
-import { resetHostedRoom } from "@/lib/hostAdmin";
+import { resetHostedRoom, startHostedQuiz } from "@/lib/hostAdmin";
 
 function generateCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -477,139 +477,18 @@ const zipQuizSetId = zipQuizSetResponse.data.id;
   }
 
   async function hostQuiz(quizSetId: string) {
-    const newRoomCode = generateCode();
+    const { data, error } = await startHostedQuiz(quizSetId);
 
-    const selectedQuiz =
-      savedQuizSets.find(
-        (q) => q.id === quizSetId
-      );
-
-    const { data: questionsData, error: loadQuestionsError } =
-      await supabase
-        .from("questions")
-        .select("*")
-        .eq("quiz_set_id", quizSetId)
-        .order("question_number", {
-          ascending: true,
-        });
-
-    if (loadQuestionsError) {
-      alert(
-        "Fragen konnten nicht geladen werden: " +
-          loadQuestionsError.message
-      );
+    if (error || !data) {
+      alert(error?.message || "Quiz konnte nicht gestartet werden.");
       return;
     }
 
-    if (!questionsData || questionsData.length === 0) {
-      alert(
-        "Dieses Quiz-Set enthält keine Fragen. Das Quiz kann nicht gehostet werden."
-      );
-      return;
-    }
-
-const quizSetValidation = validateQuizSetForBoard(
-  questionsData.map((question: any) => ({
-    category: question.category,
-    points: Number(question.points),
-  }))
-);
-
-if (!quizSetValidation.isBoardValid) {
-  alert(
-    "Dieses Quiz-Set ist nicht board-konform und kann nicht gehostet werden.\n\n" +
-      quizSetValidation.warnings.join("\n")
-  );
-  return;
-}
-
-    const { error: roomError } =
-      await supabase
-        .from("rooms")
-        .insert([
-          {
-            code: newRoomCode,
-            title:
-              selectedQuiz?.title ||
-              "Baud_iful Quizz",
-
-            current_question: 1,
-
-            game_state: "lobby",
-
-            turn_player: "",
-            active_player: "",
-
-            buzz_locked: false,
-
-            feedback: "",
-          },
-        ]);
-
-    if (roomError) {
-      alert(roomError.message);
-      return;
-    }
-
-const copiedQuestions =
-  questionsData.map((q: any, index: number) => ({
-    quiz_set_id: null,
-    room_code: newRoomCode,
-    source_pool_question_id: q.source_pool_question_id,
-    question_number: index + 1,
-    category: q.category,
-    points: q.points,
-
-    question: q.question,
-
-    solution: q.solution,
-
-    accepted_answers:
-      q.accepted_answers || [],
-
-    host_notes:
-      q.host_notes || "",
-
-    image_url:
-      q.image_url || "",
-
-    audio_url:
-      q.audio_url || "",
-
-    solution_audio_url:
-      q.solution_audio_url || "",
-
-    solution_image_url:
-      q.solution_image_url || "",
-
-    is_played: false,
-  }));
-
-    const { error: questionError } =
-      await supabase
-        .from("questions")
-        .insert(copiedQuestions);
-
-    if (questionError) {
-      alert(
-        "Fragen konnten nicht in den Raum kopiert werden: " +
-          questionError.message
-      );
-      return;
-    }
-
-    setRoomCode(newRoomCode);
-
-    const { data: newRoomData } = await supabase
-      .from("rooms")
-      .select("*")
-      .eq("code", newRoomCode)
-      .single();
-
-    setRoom(newRoomData);
+    setRoomCode(data.roomCode);
+    setRoom(data.room as any);
 
     alert(
-      `Quiz gestartet. ${copiedQuestions.length} Fragen wurden in den Raum kopiert.`
+      `Quiz gestartet. ${data.copiedQuestionCount} Fragen wurden in den Raum kopiert.`
     );
   }
 
