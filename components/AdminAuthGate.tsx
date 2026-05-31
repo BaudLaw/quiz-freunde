@@ -18,6 +18,7 @@ export default function AdminAuthGate({
   const [error, setError] = useState("");
   const [isChecking, setIsChecking] = useState(false);
   const [isRestoringSession, setIsRestoringSession] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -127,26 +128,50 @@ export default function AdminAuthGate({
             gap: 16,
           }}
         >
-          <input
-            type="password"
-            value={password}
-            disabled={isChecking}
-            onChange={(event) => {
-              setPassword(event.target.value);
-              setError("");
-            }}
-            placeholder="Admin Passwort"
-            autoComplete="off"
+          <div
             style={{
-              width: "100%",
-              padding: "14px 16px",
-              borderRadius: 12,
-              border: "1px solid rgba(34, 211, 238, 0.35)",
-              background: "#020617",
-              color: "white",
-              outline: "none",
+              display: "grid",
+              gridTemplateColumns: "1fr auto",
+              gap: 8,
             }}
-          />
+          >
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              disabled={isChecking}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setError("");
+              }}
+              placeholder="Admin Passwort"
+              autoComplete="off"
+              style={{
+                width: "100%",
+                padding: "14px 16px",
+                borderRadius: 12,
+                border: "1px solid rgba(34, 211, 238, 0.35)",
+                background: "#020617",
+                color: "white",
+                outline: "none",
+              }}
+            />
+            <button
+              type="button"
+              disabled={isChecking}
+              onClick={() => setShowPassword((current) => !current)}
+              style={{
+                padding: "0 14px",
+                borderRadius: 12,
+                border: "1px solid rgba(34, 211, 238, 0.35)",
+                background: "#0f172a",
+                color: "white",
+                fontWeight: 700,
+                cursor: isChecking ? "not-allowed" : "pointer",
+              }}
+            >
+              {showPassword ? "Verbergen" : "Anzeigen"}
+            </button>
+          </div>
 
           {error && (
             <p
