@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     body !== null &&
     "password" in body &&
     typeof body.password === "string"
-      ? body.password
+      ? body.password.trim()
       : "";
 
   if (!passwordsMatch(password, configuredPassword)) {

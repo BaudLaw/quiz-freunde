@@ -66,7 +66,9 @@ export default function AdminAuthGate({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!password) {
+    const passwordToSubmit = password.trim();
+
+    if (!passwordToSubmit) {
       setError("Bitte Admin-Passwort eingeben.");
       return;
     }
@@ -82,7 +84,7 @@ export default function AdminAuthGate({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ password: passwordToSubmit }),
       });
     } catch {
       setIsChecking(false);
@@ -134,7 +136,7 @@ export default function AdminAuthGate({
               setError("");
             }}
             placeholder="Admin Passwort"
-            autoComplete="current-password"
+            autoComplete="off"
             style={{
               width: "100%",
               padding: "14px 16px",

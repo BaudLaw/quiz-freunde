@@ -4,7 +4,7 @@ export const ADMIN_SESSION_COOKIE = "quizfreunde_admin_session";
 export const ADMIN_SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 
 export function getAdminPassword() {
-  return process.env.ADMIN_PASSWORD || "";
+  return (process.env.ADMIN_PASSWORD || "").trim();
 }
 
 export function createAdminSessionValue(secret: string) {
