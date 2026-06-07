@@ -6,6 +6,7 @@ import {
   createAdminSessionValue,
   getAdminPassword,
 } from "@/lib/adminSession";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -21,6 +22,21 @@ function passwordsMatch(input: string, expected: string) {
 }
 
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit(`admin-login:${getClientIp(request)}`, {
+    limit: 8,
+    windowMs: 5 * 60_000,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `Zu viele Login-Versuche. Bitte in ${rateLimit.retryAfterSeconds} Sekunden erneut versuchen.`,
+      },
+      { status: 429 }
+    );
+  }
+
   const configuredPassword = getAdminPassword();
 
   if (!configuredPassword) {
