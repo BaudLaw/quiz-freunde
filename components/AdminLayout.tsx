@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import AdminAuthGate from "@/components/AdminAuthGate";
+import AdminLogoutButton from "@/components/AdminLogoutButton";
 
 type AdminLayoutProps = {
   title: string;
@@ -114,6 +115,7 @@ export default function AdminLayout({
               <Link href="/host" style={navLinkStyle}>
                 Host
               </Link>
+              <AdminLogoutButton />
             </nav>
           </div>
         </header>
