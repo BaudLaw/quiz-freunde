@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import AdminAuthGate from "@/components/AdminAuthGate";
+import AdminFeedbackLayer from "@/components/AdminFeedbackLayer";
 import AdminLogoutButton from "@/components/AdminLogoutButton";
 
 type AdminLayoutProps = {
@@ -24,6 +25,7 @@ export default function AdminLayout({
         color: "#f8fafc",
       }}
     >
+      <AdminFeedbackLayer />
       <div
         style={{
           maxWidth: 1200,
