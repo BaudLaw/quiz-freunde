@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 import { supabase } from "@/lib/supabaseServer";
 
 export const runtime = "nodejs";
@@ -33,6 +34,21 @@ export async function POST(request: Request) {
 
   if (!roomCode || !playerName) {
     return jsonError("Name und Raumcode sind erforderlich.", 400);
+  }
+
+  const rateLimit = checkRateLimit(
+    `join:${getClientIp(request)}:${roomCode}`,
+    {
+      limit: 20,
+      windowMs: 60_000,
+    }
+  );
+
+  if (!rateLimit.allowed) {
+    return jsonError(
+      `Zu viele Beitrittsversuche. Bitte in ${rateLimit.retryAfterSeconds} Sekunden erneut versuchen.`,
+      429
+    );
   }
 
   const { data: roomData, error: roomError } = await supabase
